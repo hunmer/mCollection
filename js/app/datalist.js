@@ -1,0 +1,376 @@
+var g_datalist = {
+    views: {
+        default: {
+            container: () => `
+                <div class="datalist" onmousewheel="g_action.do(this, 'setItemWidth', event)">
+                    <div onScroll="g_datalist.onScroll(this)" class="row row-cards overflow-y-auto datalist-items justify-content-center p-2" style="align-content: flex-start;height: calc(100vh - 100px);"></div>
+                </div>
+            `,
+            item: d => {
+                let r = Object.values(getConfig(replaceArr(['%name', '%desc', '%duration', '%ext'], 'show,')))
+                return `
+                 <div class="datalist-item col-xs-12 col-sm-6 col-md-4 col-lg-4 col-xl-3 col-xxl-2" data-action="item_click" data-dbclick="item_dbclick" {md5} {dargable}>
+                    <div class="card card-sm h-full position-relative">
+                      ${OR(r[3], `<span class="badge top-5 start-5 position-absolute w-fit">${getExtName(d.file)}</span>`)}
+                      <a class="d-block">
+                        <img src="${d.cover}" class="thumb card-img-top" {preview}>
+                      </a>
+                      ${r[0] || r[1] || r[2] ? `
+                         <div class="card-body text-nowarp">
+                          <div class="d-flex align-items-center ">
+                            <div>
+                                ${OR(r[0], `<div>${d.title}</div>`)}
+                                ${OR(r[1], `<div class="text-muted">${d.desc}</div>`)}
+                            </div>
+                             <div class="ms-auto">
+                                ${OR(r[2], `<span class="text-muted">${getTime(d.json.duration)}</span>`)}
+                              </div>
+                            </div>
+                          </div>
+                          ` : ''}
+                    </div>
+                </div>
+            `
+            }
+        },
+
+        list: {
+            container: () => {
+                let r = Object.values(getConfig(replaceArr(['%name', '%desc', '%ext', '%duration'], 'show,')))
+                return `
+                 <div class="datalist table-responsive overflow-y-auto" style="height: calc(100vh - 100px);">
+                    <table class="table table-vcenter card-table">
+                      <thead>
+                        <tr>
+                          <th width="150px"></th>
+                         ${OR(r[0], `<th>标题</th>`)}
+                         ${OR(r[1], `<th>注释</th>`)}
+                         ${OR(r[2], `<th>扩展</th>`)}
+                         ${OR(r[3], `<th class="w-1">时长</th>`)}
+                        </tr>
+                      </thead>
+                      <tbody onScroll="g_datalist.onScroll(this)" class="datalist-items p-2">
+                      </tbody>
+                    </table>
+                  </div>
+                `
+            },
+            item: d => {
+                let r = Object.values(getConfig(replaceArr(['%name', '%desc', '%duration', '%ext'], 'show,')))
+                return `
+                    <tr data-action="item_click" data-dbclick="item_dbclick" {md5} {dargable}>
+                      <th><img src="${d.cover}" class="thumb" {preview}></th>
+                      ${OR(r[0], `<td class="text-muted">${d.title}</td>`)}
+                      ${OR(r[1], `<td class="text-muted">${d.desc}</td>`)}
+                      ${OR(r[2], `<td class="text-muted">${getTime(d.json.duration)}</td>`)}
+                      ${OR(r[3], `<td class="text-muted">${getExtName(d.file)}</td>`)}
+                    </tr>
+                `
+            }
+        }
+    },
+
+    // 新建视窗
+    rule_new(data) {
+        let query = data.query || 'SELECT * FROM {table} {rule} LIMIT {limit} OFFSET {start};'
+        let table = data.table || 'videos'
+
+        getConfig('oneTab') && this.tabs.clear()
+        this.tabs.try_add(function(v) { // 不重复打开
+            return v[1].data.query == query && v[1].data.table == table && v[1].data.rule == data.rule
+        }, {
+            title: data.title,
+            data: {
+                view: 'default', // 展示样式
+                sort: 'date', // 排序标记
+                value: data.value, // 目标参数，{type: folder, value: 文件夹} 
+                page: 0, // 当前页数
+                cnt: 0, // ?展示数量
+                pagePre: 20, // 每页展示
+                table: table, // 目标数据库
+                query: query, // 固定查找参数
+                rule: data.rule, // 条件
+                items: [], // 加载过的md5列表
+            },
+        })
+    },
+
+    // 返回现在内容
+    content_get(tab) {
+        return this.tab_method('getContent', tab)
+    },
+
+    // 返回当前tab
+    tab_getCurrent() {
+        return this.tabs.getCurrentTab()
+    },
+
+    tab_remove(tab) {
+        return this.tab_method('tab_remove', tab)
+    },
+
+    // 带tab名称的动态tab方法
+    tab_method(method, tab, ...args) {
+        if (!tab) tab = this.tab_getCurrent()
+        return this.tabs[method](tab, ...args)
+    },
+    // 切换视图
+    view_switch(view, tab) {
+        this.tab_method('tab_setValue', tab, 'data.view', view, true)
+    },
+    // 更新视图
+    view_update(view, tab) {
+        this.view_switch(this.view_getCurrent())
+    },
+
+    // 返回tab属性
+    tab_getOpts(tab) {
+        return this.tabs.tab_getValue(tab)
+    },
+
+    // 返回视图
+    view_getCurrent(tab) {
+        return this.tab_getOpts('view')
+    },
+
+    // 返回视图基本结构
+    view_getContent(view) {
+        return this.views[view || 'default'].container()
+    },
+
+    // 切换排序
+    sort_switch(name, tab) {
+        this.tab_method('tab_setValue', tab, 'data.sort', name, true)
+    },
+
+    get_html(d, view) {
+        return this.views[view || 'default'].item(d)
+    },
+
+    onScroll(dom) {
+        let scrollTop = dom.scrollTop;
+        if (scrollTop == 0) {
+            // TODO 记录复原往上翻页？
+            return;
+        }
+        if (scrollTop + dom.offsetHeight + 50 >= dom.scrollHeight) {
+            g_pp.setTimeout('nextPage', () => g_datalist.page_nextPage(), 200)
+        }
+    },
+
+    init() {
+        const self = this
+
+        
+        g_tabs.init({
+            saveData: (name, data) =>  g_db.db_saveJSON('tabs_' + name, data),
+            getData: name =>  g_db.db_readJSON('tabs_' + name, {}),
+        })
+        g_ui.register('datalist', {
+            target: '#content',
+            html: `
+                <div class="position-relative w-full" style="height: calc(100vh - 35px);overflow: hidden;">
+                    <div class="row w-full pb-3 p-2" style="height: 30px">
+                        <div id="filters" class="d-flex col" ></div>
+                        <div id="datalist_actions" class="d-flex col flex-row-reverse"></div>
+                    </div>
+
+                    <div id="itemlist_tabs" class="overflow-y-auto border-unset" style="padding-bottom: 100px;"></div>
+                    <div class="position-absolute bottom-0 w-full border-top p-2 card" style="height: 50px">
+                        <div class="d-flex align-items-center mr-2 hide1" id="bar_import">
+                            <div class="flex-grow-1 ">
+                                <div class="progress border" style="height: 20px">
+                                  <div class=" progress-bar progress-bar-striped" role="progressbar" style="width: 70%"></div>
+                                </div>
+                            </div>
+                            <div class="m-1">
+                                <span class="badge bg-warning">
+                                    <i class="ti ti-hourglass-high me-1"></i><span>20</span>
+                                </span>
+                                <span class="badge bg-success">
+                                    <i class="ti ti-check me-1"></i><span>20</span>
+                                </span>
+                                <span class="badge bg-danger">
+                                    <i class="ti ti-x me-1"></i><span>20</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            `,
+            onShow: function() {},
+            onHide: function() {},
+        }).show('datalist')
+
+        // g_action.registerAction({
+
+        // })
+
+        self.tabs = g_tabs.register('datalist', {
+            target: '#itemlist_tabs',
+            parseContent: (k, v) => {
+                return self.view_getContent(v.data.view)
+            },
+            // parseTab: (k, v) => v.title,
+            onShow: tab => {
+                // 如果列表还没初始化进行初始化
+                let div = self.content_get(tab)
+                // TODO 检测头部有无新数据变动？
+                if (!div.find('.datalist-item').length) { // 没有数据
+                    // 初始化范围选择
+                    // todo 优化选择
+                    if (self.ds) self.ds.stop()
+
+                    self.ds = new DragSelect({
+                        selectables: [],
+                        area: div.find('.datalist-items')[0],
+                        draggability: false,
+                        customStyles: true,
+                        overflowTolerance: { x: 50, y: 100 }, // xy触发自动滚动的范围
+                        multiSelectMode: true,
+                        multiSelectKeys: ['Control'],
+                        selectedClass: 'item_selected',
+                        // hoverClass: 'hovered',
+                    });
+
+                    self.ds.subscribe('callback', ({ items }) => {
+                        g_item.selected_update()
+                    })
+
+                    self.ds.subscribe('dragstart', ({ items }) => {
+                        if (items.length) {
+                            if (items[0].dataset.file) { // 跟拖拽文件冲突
+                                self.ds.break() // 取消
+                            }
+                        }
+                    })
+
+                    self.page_toPage(tab, 0, 0)
+                }
+            },
+            onHide: tab => {
+
+            },
+            onClose: tab => {
+
+            }
+        }).show()
+
+    },
+
+    // 更新内容
+    update(tab) {
+
+    },
+
+    // 解析item结构
+     item_parse(d, h = '', view) {
+        let { md5 } = d
+        d.cover =  g_item.item_getVal('cover', d)
+        d.file =  g_item.item_getVal('file', d)
+        return (h || this.get_html(d, view)).
+        replace('{dargable}', !d.file.startsWith('http') ? ' data-file="' + d.file + '" draggable="true"' : '').
+        replace('{preview}', ['mp4', 'mp3', 'wav', 'ogg'].includes(getExtName(d.file)) ? 'data-hover="item_preview" data-hoverTime="300"' : '').
+        replace('{md5}', `data-md5="${md5}"`).
+        replace('{cover}', d.cover).
+        replace('{file}', d.file)
+    },
+
+    // 下一页
+    page_nextPage(tab) {
+        return this.page_toPage(tab, 1)
+    },
+
+    tab_clear() {
+
+    },
+
+    // 到指定页数
+    async page_toPage(tab, add = 0, page) {
+        let data = this.tab_method('tab_getValue', tab).data
+        // 查询参数
+        data.page = (page || data.page) + add
+
+        let start = data.page * data.pagePre;
+        let query = data.query.
+        replace('{rule}', data.rule).
+        replace('{table}', data.table).
+        replace('{limit}', data.pagePre).
+        replace('{start}', start)
+
+        if (query.toLowerCase().indexOf('order by') == -1) { // 没排序
+            query = query.replace('LIMIT', `ORDER BY ${data.sort} ${data.asc ? 'asc' : 'desc'} LIMIT `)
+        }
+
+        let items = await g_data.data_getResults(query)
+        // console.log(JSON.stringify(items))
+        console.log(items)
+
+        // 继续上次的搜索结果？
+        // 储存md5列表
+        // items.forEach((item, i) => {
+        //     if (data.items.includes(item.md5)) {
+        //         delete items[i]
+        //         console.info('重复md5!!')
+        //     } else {
+        //         data.items.push(item.md5)
+        //     }
+        // })
+
+        data.hasMore = (items.length || 0) >= data.pagePre
+
+        this.tab_loadItems(items, tab)
+        setTimeout(() => {
+            if (data.hasMore && !isScroll(g_datalist.content_get().find('.datalist-items')[0]).scrollY) {
+                this.page_nextPage();
+            }
+        }, 500);
+    },
+
+    // 指定tab加载items
+    tab_loadItems(items, tab, insert = 'appendTo') {
+        let self = this
+        let tab_data = this.tab_method('tab_getValue', tab)
+        if (!tab_data) {
+            // 当前没有tab
+            return
+        }
+        let h = ``;
+        let data = tab_data.data
+        let target = this.content_get(tab).find('.datalist-items')
+        items.forEach(item => {
+            let data = g_data.data_parse(item)
+            h += this.item_parse(data, '', data.view)
+        })
+        // console.log(items)
+
+        target.find('.nomore').remove()
+        if (!h) {
+            h = `
+            <div class="text-center p-2 nomore">
+                <i class="ti ti-mood-empty fs-2"></i>
+                <p>没有更多了...</p>
+            </div>`
+        }
+        let div = $(h)
+        div[insert](target).find('.lazyload').lazyload()
+        target.length && self.ds.setSelectables(target[0].querySelectorAll('.datalist-item'))
+        g_setting.apply('itemWidth') // 更新宽度
+
+    },
+
+    progress_set(all, succss, error) {
+        let i = all - succss - error
+        let finish = i <= 0
+        let div = $('#bar_import').toggleClass('hide1', finish)
+        div.find('.progress-bar').css('width', parseInt(100 * (1 - i / all)) + '%')
+        div.find('.bg-warning span').html(i)
+        div.find('.bg-success span').html(succss)
+        div.find('.bg-danger span').html(error)
+    },
+
+
+}
+
+g_datalist.init()

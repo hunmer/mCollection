@@ -1,0 +1,103 @@
+{
+  "name": "mCollection",
+  "version": "1.0.0",
+  "description": "A minimal Electron application",
+  "main": "main.js",
+  "scripts": {
+    "client": "chcp 65001 && electron .",
+    "server": "chcp 65001 && node server.js",
+    "start": "concurrently \"npm run server\" \"npm run client\"",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "update": "node fileList.js",
+    "pack": "electron-builder --dir",
+    "postinstall": "electron-builder install-app-deps",
+    "dist": "electron-builder",
+    "dist-win": "electron-builder --win --ia32",
+    "dist-win64": "electron-builder --win --x64",
+    "dist-mac": "electron-builder --mac",
+    "dist-linux": "electron-builder --linux"
+  },
+  "repository": "https://github.com/hunmer/mCollection",
+  "keywords": [],
+  "author": "GitHub",
+  "license": "CC0-1.0",
+  "devDependencies": {
+    "electron": "^21.1.0",
+    "electron-builder": "^22.14.13",
+    "electron-rebuild": "^3.2.7"
+  },
+  "dependencies": {
+    "@electron/remote": "^2.0.8",
+    "better-sqlite3": "^7.5.3",
+    "builder-util": "^23.5.0",
+    "concurrently": "^7.4.0",
+    "electron-store": "^8.1.0",
+    "express": "^4.18.1",
+    "get-image-colors": "^4.0.1",
+    "npm-install-package": "^2.1.0",
+    "request": "^2.88.2",
+    "tslib": "^2.4.0",
+    "ws": "^8.9.0"
+  },
+  "build": {
+    "productName": "mCollection",
+    "appId": "com.hunmer.mCollection",
+    "copyright": "hunmer",
+    "asar": false,
+    "files": [
+      "!download",
+      "!database",
+      "!script",
+      "!cache",
+      "!test",
+      "!.git"
+    ],
+    "extraFiles": [
+      "./extensions"
+    ],
+    "directories": {
+      "output": "build"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "favicon.ico"
+    },
+    "linux": {
+      "icon": "favicon.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "favicon.ico"
+    },
+    "dmg": {
+      "title": "Mac程序",
+      "icon": "favicon.ico",
+      "contents": [
+        {
+          "x": 110,
+          "y": 150
+        },
+        {
+          "x": 240,
+          "y": 150,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ],
+      "window": {
+        "x": 400,
+        "y": 400
+      }
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "installerIcon": "favicon.ico"
+    }
+  }
+}

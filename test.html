@@ -1,0 +1,72 @@
+<style>
+    .box {
+		background-color: antiquewhite;
+		width: 50px;
+		height: 50px;
+		color:  red;
+		font-size:  2rem;
+		margin: 5px;
+		text-align: center;
+		user-select: none;
+	}
+
+	.box.selected,.ds-selected{
+		background-color: red;
+		color: white;
+	}
+
+
+	.box.hovered{
+		border:  1px solid blue;
+	}
+
+	.ds-selectable {
+		border:  3px solid yellow;
+
+	}
+	#list {
+		margin:  0 auto;
+		padding: 20px;
+		display: flex;
+		height: 300px; 
+		width: 350px;
+		overflow-y: auto;
+		flex-wrap: wrap;
+	}
+
+	body, html {
+		height: 100vh;
+	}
+</style>
+
+<body>
+    <div id="list">
+    </div>
+</body>
+<script type="text/javascript" src="js/ds.min.js"></script>
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript">
+let h = ''
+for (let i = 0; i < 200; i++) {
+    h += `<div class="box">${i}</div>`
+}
+$('#list').html(h)
+
+var ds = new DragSelect({
+    selectables: document.querySelectorAll('.box'),
+    area: $('#list')[0],
+    draggability: false,
+    overflowTolerance: { x: 50, y: 100 }, // xy触发自动滚动的范围
+    // multiSelectMode: true, // 重复添加模式(TODO 按住某个键的时候开启)
+    multiSelectKeys: ['Control'],
+    // selectedClass: 'selected',
+    // hoverClass: 'hovered',
+    useTransform: false,
+});
+
+ds.subscribe('callback', ({ items }) => {
+    console.log(items)
+})
+
+console.log(ds.getSlection())
+</script>

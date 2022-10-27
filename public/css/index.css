@@ -1,0 +1,251 @@
+
+.dropdown-item {
+    min-width: unset;
+}
+
+.bg-unset {
+    background-color: unset !important;
+}
+
+.form-videocheck{
+    position: relative;
+}
+
+.app-region-darg {
+    -webkit-app-region: drag;
+}
+
+.form-videocheck .form-videocheck-input {i
+    position: absolute;
+    left: 4px;
+    top:  4px;
+    z-index:  2;
+}
+
+:root {
+    --offset-top: 0px;
+}
+
+main {
+    width:  100%;
+    position: fixed;
+    overflow-y: hidden;
+    top: var(--offset-top) !important;
+}
+
+[class*=" link-"].disabled,
+[class^=link-].disabled {
+    color: #c7c9cb;
+    pointer-events: none;
+}
+
+
+.dropdown-item i {
+    margin-right: 5px;
+}
+
+i,.badge {
+    cursor: pointer !important;
+}
+
+webview.hidden {
+    width: 0px;
+    height: 0px;
+    flex: 0 1;
+}
+
+body {
+    /*min-height: calc(100vh);*/
+    -webkit-overflow-scrolling: touch;
+    font-family: customFont, -apple-system, BlinkMacSystemFont, Roboto, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    overflow: hidden;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+}
+
+.w-unset {
+    width: unset !important;
+    min-width: unset !important;
+}
+.h-unset {
+    height: unset !important;
+    max-height: unset !important;
+}
+.w-max {
+    width: 100vw !important;
+}
+
+.h-max {
+    height: 100vh !important;
+}
+
+.w-fit {
+    width: fit-content !important;
+}
+
+.h-fit {
+    height: fit-content !important;
+}
+
+.show {
+    display: unset !important;
+}
+
+html,
+body {
+    overflow: hidden;
+    scroll-behavior: smooth;
+}
+
+@font-face {
+    font-family: customFont;
+    src: url(NotoSansSC-Regular.otf);
+}
+
+::-webkit-scrollbar {
+    width: 3px;
+    height: 3px;
+}
+
+::-webkit-scrollbar-track {
+    width: 5px;
+    background: rgba(#101F1C, 0.1);
+    -webkit-border-radius: 2em;
+    -moz-border-radius: 2em;
+    border-radius: 2em;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: rgba(144, 147, 153, .5);
+    background-clip: padding-box;
+    min-height: 28px;
+    -webkit-border-radius: 2em;
+    -moz-border-radius: 2em;
+    border-radius: 2em;
+    transition: background-color .3s;
+    cursor: pointer;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(144, 147, 153, .3);
+}
+
+.user-icon {
+    width: 100%;
+    border-radius: 50%;
+}
+
+.w-full {
+    width: 100% !important;
+}
+
+.h-full {
+    height: 100% !important;
+}
+
+.w-max {
+    width: 100vw !important;
+}
+
+.h-auto {
+    height: fit-content !important;
+}
+
+.w-auto {
+    width: fit-content !important;
+}
+
+.mr-2 {
+    margin-right: 10px;
+}
+
+.hide {
+    display: none;
+}
+
+.hide1 {
+    display: none !important;
+}
+
+.show1 {
+    display: unset !important;
+}
+
+.list-group-item-action {
+    cursor: pointer;
+}
+
+.text-nowarp {
+    display: block;
+    word-break: keep-all;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.overflow-y-auto {
+    overflow-y: auto;
+}
+
+.overflow-x-auto {
+    overflow-x: auto;
+}
+
+
+.start-5 {
+    left: 5px !important;
+}
+
+.start-10 {
+    left: 10px !important;
+}
+
+.top-5 {
+    top: 5px !important;
+}
+
+.top-10 {
+    top: 10px !important;
+}
+
+.end-5 {
+    right: 5px !important;
+}
+
+.end-10 {
+    right: 10px !important;
+}
+
+
+.bottom-5 {
+    bottom: 5px !important;
+}
+
+.bottom-10 {
+    bottom: 10px !important;
+}
+
+/* callout */
+.bd-callout-info {
+    --bd-callout-bg: rgba(var(--bs-info-rgb), .075);
+    --bd-callout-border: rgba(var(--bs-info-rgb), .5);
+}
+.bd-callout {
+    padding: 1.25rem;
+    /*margin-top: 1.25rem;*/
+    margin-bottom: 1.25rem;
+    background-color: var(--bd-callout-bg, var(--bs-gray-100));
+    border-left: 0.25rem solid var(--bd-callout-border, var(--bs-gray-300));
+}
+
+
+.bd-callout-warning {
+    --bd-callout-bg: rgba(var(--bs-warning-rgb), .075);
+    --bd-callout-border: rgba(var(--bs-warning-rgb), .5);
+}
+
+.bd-callout-danger {
+    --bd-callout-bg: rgba(var(--bs-danger-rgb), .075);
+    --bd-callout-border: rgba(var(--bs-danger-rgb), .5);
+}
