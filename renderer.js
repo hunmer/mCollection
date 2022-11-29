@@ -16,7 +16,7 @@ function downloadFile(opts) {
         method: 'GET',
         url: opts.url,
         timeout: 15000,
-        proxy: 'http://127.0.0.1:1080',
+        proxy: 'http://127.0.0.1:4780',
     }
     var req = request(opt);
     var fileBuff = [];
