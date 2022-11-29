@@ -1,16 +1,22 @@
 let g_plugin = {
     events: {},
+    defaultPlugins: {},
     instance: {},
 
     // 重置插件
-    resetAll: function() {
-        nodejs.files.removeDir(__dirname + 'scripts/');
-        g_plugin.defaultList();
+    resetAll() {
+        // nodejs.files.removeDir(this.getSciptPath());
+        this.resetPlugins()
+        setTimeout(() => location.reload(), 1000)
+    },
+
+    getSciptPath() {
+        return _dataPath + "/scripts/"
     },
 
     // 初始化插件列表
-    defaultList: function(reload = true) {
-        this.list = {};
+    resetPlugins(reload = true) {
+        this.list = copyObj(this.defaultPlugins);
         // this.setItem(guid(), {
         //     //title=测试插件&desc=添加音效让剪辑不在无聊&url=&version=0.0.1
         //     title: '测试插件',
@@ -34,7 +40,7 @@ let g_plugin = {
     loadedPlugins: [],
 
     // 加载所有插件
-    initPlugins: function() {
+    initPlugins() {
         $(() => {
             this.loadedPlugins = this.getPlugins()
             loadRes(this.loadedPlugins, i => {
@@ -60,11 +66,13 @@ let g_plugin = {
     },
 
     // 初始化
-    init: function() {
+
+    init(funs = {}) {
         const self = this
+
         self.list = local_readJson('plugins', {});
         if (Object.keys(self.list).length == 0) {
-            self.resetAll();
+            self.resetPlugins();
         }
         self.initPlugins();
         g_menu.registerMenu({
@@ -102,6 +110,13 @@ let g_plugin = {
             }
         })
         // self.modal_show();
+        let init = funs.init
+        if (init) {
+            funs.init.apply(this)
+            delete funs.init
+        }
+        Object.assign(this, funs)
+        return this
     },
 
     setVal(key, k, v) {
@@ -110,7 +125,7 @@ let g_plugin = {
     },
 
     // 弹出删除确定框
-    prompt_delete: function(key) {
+    prompt_delete(key) {
         // TODO 同时删除文件询问
         confirm('是否删除插件 【' + this.get(key).title + '】 ?', {
             title: '删除插件',
@@ -162,11 +177,11 @@ let g_plugin = {
 
     // 获取插件位置
     getScipt(key) {
-        return _dataPath + '/scripts/' + key + '.js'
+        return this.getSciptPath() + key + '.js'
     },
 
     // 弹出编辑插件窗口
-    prompt_add: function(key) {
+    prompt_add(key) {
         let isNew = isEmpty(key)
         let d = Object.assign({
             content: '',
@@ -230,21 +245,21 @@ let g_plugin = {
         })
     },
 
-    get: function(key) {
+    get(key) {
         return this.list[key];
     },
-    remove: function(key, save = true) {
+    remove(key, save = true) {
         delete this.list[key];
         this.save(save);
     },
-    save: function(save = true) {
+    save(save = true) {
         if (save) {
             local_saveJson('plugins', this.list);
         }
         $('#modal_plugins').length && this.rendererList();
 
     },
-    setItem: function(key, value, save = true) {
+    setItem(key, value, save = true) {
         nodejs.files.write(this.getScipt(key), value.content);
         delete value.content;
 
@@ -252,7 +267,7 @@ let g_plugin = {
         this.save(save);
     },
     // 刷新列表
-    rendererList: function() {
+    rendererList() {
         let h = '';
         for (let key in this.list) {
             let d = this.list[key];
@@ -274,7 +289,7 @@ let g_plugin = {
         $('#modal_plugins tbody').html(h);
     },
     // 插件列表
-    modal_show: function() {
+    modal_show() {
         let h = `
             <div class="table-responsive">
                 <table class="table table-vcenter table-nowrap">
@@ -298,22 +313,29 @@ let g_plugin = {
             once: true,
             html: h,
             buttons: [{
-                id: 'add',
-                text: '新增',
-                class: 'btn-warning',
-            }, {
-                id: 'reset',
-                text: '重置',
-                class: 'btn-secondary',
-            }, {
-                id: 'refresh',
-                text: '刷新',
-                class: 'btn-warning',
-            }, {
-                id: 'more',
-                text: '获取更多',
-                class: 'btn-info',
-            }],
+                    id: 'add',
+                    text: '新增',
+                    class: 'btn-warning',
+                }, {
+                    id: 'reset',
+                    text: '重置',
+                    class: 'btn-secondary',
+                },
+                /* {
+                    id: 'refresh',
+                    text: '刷新',
+                    class: 'btn-warning',
+                },*/
+                 {
+                    id: 'open',
+                    text: '导入',
+                    class: 'btn-success',
+                }, {
+                    id: 'more',
+                    text: '获取更多',
+                    class: 'btn-info',
+                }
+            ],
             onClose: () => {
                 if (!arr_equal(this.getPlugins(), this.loadedPlugins)) {
                     confirm('插件需要重载才能生效,是否重载页面?', {
@@ -331,25 +353,30 @@ let g_plugin = {
                         return;
                     case 'btn_reset':
                         return confirm('确定要重置吗?').then(() => g_plugin.resetAll())
+                    case 'btn_open':
+                        openFileDiaglog({
+                            title: '打开脚本文件',
+                            properties: ['openFile'],
+                            filters: [
+                                { name: 'js文件', extensions: ['js'] },
+                            ],
+                        }, path => {
+                            if (!isEmpty(path[0])) {
+                                this.script_import(path[0])
+                            }
+                        })
+                        break;
 
                     case 'btn_refresh':
-                        let path = _dataPath + "/scripts/"
+                        let path = this.getSciptPath()
                         nodejs.files.items(path).files.forEach(script => {
                             let key = getFileName(script, false)
                             if (getExtName(script) == 'js') {
                                 // namespace 当作ID?
-                                let { meta } = this.parseScript(nodejs.files.read(path + script))
-                                console.log(meta)
-                                this.list[key] = Object.assign(this.get(key) || {}, {
-                                    title: meta['@name'],
-                                    desc: meta['@description'],
-                                    version: meta['@version'],
-                                    enable: false,
-                                    primary: 0,
-                                })
+                                this.script_import(path + script, key)
+
                             }
                         })
-                        this.save()
                         return
 
                 }
@@ -359,16 +386,30 @@ let g_plugin = {
         this.rendererList();
     },
 
+    script_import(file, key) {
+        if (!key) key = getFileName(file, false)
+        let { meta } = this.parseScript(nodejs.files.read((file)))
+        console.log(meta)
+        this.list[key] = Object.assign(this.get(key) || {}, {
+            title: meta['@name'],
+            desc: meta['@description'],
+            version: meta['@version'],
+            enable: false,
+            primary: 0,
+        })
+        this.save()
+    },
+
 
     /* events */
-    initEvent: function(eventName, callback, overwrite = false) {
+    initEvent(eventName, callback, overwrite = false) {
         let event = this.getEvent(eventName, true);
         event.finish = callback;
         // 绑定最后执行函数
     },
 
     // 注册事件
-    registerEvent: function(eventName, callback, primary = 1) {
+    registerEvent(eventName, callback, primary = 1) {
         let event = this.getEvent(eventName);
         if (event) {
             event.listeners.push({
@@ -380,12 +421,12 @@ let g_plugin = {
     },
 
     // 取消注册事件
-    unregisterEvent: function(eventName) {
+    unregisterEvent(eventName) {
         delete this.events[eventName];
     },
 
     // 获取事件
-    getEvent: function(eventName, create = true) {
+    getEvent(eventName, create = true) {
         if (create && !this.events[eventName]) {
             this.events[eventName] = {
                 listeners: [],
@@ -395,7 +436,7 @@ let g_plugin = {
     },
 
     // 执行事件
-    callEvent: function(eventName, data) {
+    callEvent(eventName, data) {
         let self = this
         return new Promise(async function(reslove, reject) {
             let event = self.getEvent(eventName);
@@ -420,5 +461,3 @@ let g_plugin = {
     },
 
 }
-
-$(g_plugin.init());

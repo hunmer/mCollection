@@ -1,44 +1,8 @@
-var g_border = {
+
+g_border.init({
 	init(){
-
-		this.style = $(`<style>
-			:root {
-			    --offset-top: 30px !important;
-			    --offset-left: 0px;
-			}
-
-			#dragBar {
-				position:fixed;
-				top: 0;
-				height: 30px;
-				left:var(--offset-left);
-				width: calc(100vw - var(--offset-left) - 10px);
-				z-index: 2;
-			}
-
-			#traffic {
-			    display: inline-flex;
-			}
-
-			#traffic .light {
-			    margin: 8px;
-			    width: 15px;
-			    height: 15px;
-			    border-radius: 50%;
-			    cursor: pointer;
-			}
-
-			.traffic_icons div:not(:last-child) {
-				margin-right: 5px;
-			}
-			#dragBar i{
-				font-size: 1.2rem;
-			}
-
-		</style>`).appendTo('body')
-
-		this.bar = $(`<div id="dragBar" class="d-flex m-1">
-			<div  class="flex-grow-1 ms-2 p-1">
+		this.bar.html(`
+				<div  class="flex-grow-1 ms-2 p-1">
 				<div class="traffic_icons d-flex align-items-center m-0" style="top: 2px;">
 	            	<div data-action="sidebar_toggle,left" ><i class="ti ti-layout-sidebar"></i></div>
 
@@ -64,25 +28,7 @@ var g_border = {
 	            <div class="light" style="background-color: #ffeaa7" data-action="max"></div>
 	            <div class="light" style="background-color: #ff7675" data-action="close"></div>
 	        </div>
-		</div>`).appendTo('main')
-					
-		
-		setInterval(() => {
-			let title = document.title
-			if(title != self.title){
-				self.title = title
-				$('#_title').find('b').html(title)
-			}
-		}, 500)
-
-		g_action.
-		registerAction(['pin', 'max', 'min', 'close'], (dom, action) =>  ipc_send(action[0]))
-	},
-
-	destroy(){
-		this.style.remove()
-		this.bar.remove()
+		`)
 	}
-}
 
-g_border.init()
+})

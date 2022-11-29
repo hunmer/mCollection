@@ -7,9 +7,5 @@ $(function() {
         }
     }).resize()
 
-  
-
-    
-   
 
 });

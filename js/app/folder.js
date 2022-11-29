@@ -14,11 +14,12 @@ g_folder.init({
 
 g_action.
 registerAction({
+
     category_folder: dom => { // 展开目录
         let name = dom.dataset.name
         let h = ''
         let datas = []
-        for (let [k, v] of Object.entries(self.folder_getItems(name, true))) {
+        for (let [k, v] of Object.entries(g_folder.folder_getItems(name, true))) {
             datas.push({
                 html: g_category.item_html(k, 'folder', v, 'category_folder'),
                 group: name
@@ -48,7 +49,7 @@ registerAction({
 
         }
         // 如果存在父目录过滤器，则应用规则
-        g_datalist.tabs.tab_getTypes('folder', self.folder_getFolder(name)).forEach(tab => {
+        g_datalist.tabs.tab_getTypes('folder', g_folder.folder_getFolder(name)).forEach(tab => {
             // 应该更新父tab的 太麻烦了直接删了
             g_datalist.tab_remove(tab)
         })
@@ -62,8 +63,9 @@ registerAction({
 // 右键菜单
 g_category.
 registerAction('folder', (dom, action) => {
+    console.log(action)
     let folder = action[2]
-    self.menu_folder = folder // TODO 设置dropdown的key
+    g_folder.menu_folder = folder // TODO 设置dropdown的key
     g_dropdown.show('actions_folders', dom)
 })
 

@@ -1,0 +1,43 @@
+:root {
+    --screen-bottom: 400px;
+}
+
+a {
+    -webkit-user-drag:none;
+}
+
+main {
+    height: calc(100vh - var(--offset-top));
+}
+
+#screen_top {
+    /*height: calc(100vh - var(--screen-bottom));*/
+    height: 100vh;
+}
+
+#screen_bottom {
+    height: var(--screen-bottom);
+}
+
+#cut_start img,
+#cut_end img {
+    width: 256px;
+    height: 144px;
+    object-fit: cover;
+}
+
+.ribbon {
+    border-radius: 6px 0px 6px 6px;
+}
+
+.traffic_icons div {
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+
+#playlist .nav-link.active {
+    background-color: var(--tblr-primary);
+    color: white;
+}
+

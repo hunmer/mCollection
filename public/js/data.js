@@ -180,6 +180,7 @@ var g_data = {
             delete funs.init
         }
         Object.assign(this, funs)
+        return this
     },
 
     // 文件列表转成对象
@@ -244,3 +245,5 @@ function arr_join(arr, join = '||') {
 //         g_folder.folder_set(v.parent)
 //     }
 // })
+
+module.exports = g_data

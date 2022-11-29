@@ -12,8 +12,8 @@ var g_datalist = {
                  <div class="datalist-item col-xs-12 col-sm-6 col-md-4 col-lg-4 col-xl-3 col-xxl-2" data-action="item_click" data-dbclick="item_dbclick" {md5} {dargable}>
                     <div class="card card-sm h-full position-relative">
                       ${OR(r[3], `<span class="badge top-5 start-5 position-absolute w-fit">${getExtName(d.file)}</span>`)}
-                      <a class="d-block">
-                        <img src="${d.cover}" class="thumb card-img-top" {preview}>
+                      <a class="d-block ">
+                        <img src="./res/loading.gif" data-src="${d.cover}" class="thumb card-img-top lazyload" {preview}>
                       </a>
                       ${r[0] || r[1] || r[2] ? `
                          <div class="card-body text-nowarp">
@@ -221,31 +221,31 @@ var g_datalist = {
                     // 初始化范围选择
                     // todo 优化选择
                     if (self.ds) self.ds.stop()
+                    if(typeof(DragSelect) != 'undefined'){
+                           self.ds = new DragSelect({
+                            selectables: [],
+                            area: div.find('.datalist-items')[0],
+                            draggability: false,
+                            customStyles: true,
+                            overflowTolerance: { x: 50, y: 100 }, // xy触发自动滚动的范围
+                            multiSelectMode: true,
+                            multiSelectKeys: ['Control'],
+                            selectedClass: 'item_selected',
+                            // hoverClass: 'hovered',
+                        });
 
-                    self.ds = new DragSelect({
-                        selectables: [],
-                        area: div.find('.datalist-items')[0],
-                        draggability: false,
-                        customStyles: true,
-                        overflowTolerance: { x: 50, y: 100 }, // xy触发自动滚动的范围
-                        multiSelectMode: true,
-                        multiSelectKeys: ['Control'],
-                        selectedClass: 'item_selected',
-                        // hoverClass: 'hovered',
-                    });
+                        self.ds.subscribe('callback', ({ items }) => {
+                            g_item.selected_update()
+                        })
 
-                    self.ds.subscribe('callback', ({ items }) => {
-                        g_item.selected_update()
-                    })
-
-                    self.ds.subscribe('dragstart', ({ items }) => {
-                        if (items.length) {
-                            if (items[0].dataset.file) { // 跟拖拽文件冲突
-                                self.ds.break() // 取消
+                        self.ds.subscribe('dragstart', ({ items }) => {
+                            if (items.length) {
+                                if (items[0].dataset.file) { // 跟拖拽文件冲突
+                                    self.ds.break() // 取消
+                                }
                             }
-                        }
-                    })
-
+                        })
+                    }
                     self.page_toPage(tab, 0, 0)
                 }
             },

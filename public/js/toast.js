@@ -48,8 +48,8 @@ var g_toast = {
             level: 'primary',
             tips: '',
             text: '',
-            timeout: 3000,
         }, opts)
+        if(!opts.timeout) opts.timeout = 3000
 
         let h = d.onParse(opts)
         if (!isEmpty(h)) {
@@ -58,11 +58,14 @@ var g_toast = {
         }
     },
 
-    toast(text, title, level) {
+    toast(text, title, level, timeout) {
+        if(isEmpty(title)) title = '提示'
+        if(isEmpty(level)) level = 'primary'
         g_toast.tip('default', {
-            title: title || '提示',
-            text: text,
-            level: level || 'primary'
+            title,
+            text,
+            level,
+            timeout
         })
 
     },
@@ -89,6 +92,6 @@ g_toast.register('default', {
 //     level: 'danger'
 // })
 
-function toast(title, level){
-    g_toast.toast(title, '提示', level)
+function toast(title, level, timeout){
+    g_toast.toast(title, '提示', level, timeout)
 }

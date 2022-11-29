@@ -17,7 +17,7 @@ var g_sideR = {
                 }
 
                 #sidebar_right.hideSidebar {
-                    margin-right: -var(--offset-right);
+                    margin-right: calc(0px - var(--offset-right));
                 }
 
                 main[sidebar-right]{

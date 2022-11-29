@@ -1,9 +1,4 @@
 $(function() {
-    g_setting.default = {
-        savePath: __dirname + '\\downloads\\'
-    }
-
-
     g_action.registerAction({
         setting_setSavePath: dom => {
             g_pp.set('savePath', path => $('#input_savePath').val(path[0]));

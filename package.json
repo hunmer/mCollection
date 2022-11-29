@@ -1,13 +1,14 @@
 {
   "name": "mCollection",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A minimal Electron application",
   "main": "main.js",
   "scripts": {
+    "youtube_tv": "chcp 65001 && electron main.js onlineCutter",
+    "douyin": "chcp 65001 && electron main.js dou",
     "client": "chcp 65001 && electron .",
-    "server": "chcp 65001 && node server.js",
-    "start": "concurrently \"npm run server\" \"npm run client\"",
-    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd server && node server.js",
+    "dev": "chcp 65001 && concurrently \"npm run server\" \"node node_modules\\wait-on\\bin\\wait-on http://localhost:41597/ && npm run client\"",
     "update": "node fileList.js",
     "pack": "electron-builder --dir",
     "postinstall": "electron-builder install-app-deps",
@@ -19,25 +20,25 @@
   },
   "repository": "https://github.com/hunmer/mCollection",
   "keywords": [],
-  "author": "GitHub",
+  "homepage": "./",
+  "author": "hunmer",
   "license": "CC0-1.0",
   "devDependencies": {
     "electron": "^21.1.0",
-    "electron-builder": "^22.14.13",
-    "electron-rebuild": "^3.2.7"
+    "electron-builder": "^22.14.13"
   },
   "dependencies": {
     "@electron/remote": "^2.0.8",
-    "better-sqlite3": "^7.5.3",
+    "aria2": "^4.1.2",
     "builder-util": "^23.5.0",
     "concurrently": "^7.4.0",
+    "electron-progressbar": "^2.0.1",
     "electron-store": "^8.1.0",
-    "express": "^4.18.1",
     "get-image-colors": "^4.0.1",
     "npm-install-package": "^2.1.0",
     "request": "^2.88.2",
-    "tslib": "^2.4.0",
-    "ws": "^8.9.0"
+    "tree-kill": "^1.2.2",
+    "tslib": "^2.4.0"
   },
   "build": {
     "productName": "mCollection",
@@ -46,18 +47,21 @@
     "asar": false,
     "files": [
       "!download",
+      "!downloads",
       "!database",
       "!script",
+      "!build",
       "!cache",
       "!test",
       "!.git"
     ],
-    "extraFiles": [
-      "./extensions"
-    ],
+    "includeSubNodeModules": true,
     "directories": {
       "output": "build"
     },
+    "extraFiles": [
+      "./scripts"
+    ],
     "win": {
       "target": [
         "nsis"

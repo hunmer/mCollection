@@ -12,7 +12,6 @@ g_db.init({
          deleted BOOLEAN,
          md5    CHAR(32)           NOT NULL
      );
-
      CREATE TABLE IF NOT EXISTS clips(
          id      INTEGER PRIMARY KEY AUTOINCREMENT,
          tags   TEXT,
@@ -29,12 +28,10 @@ g_db.init({
          title   VARCHAR(256),
          md5    CHAR(32)           NOT NULL
      );
-
      `,
     init() {
         g_action.registerAction({
           
         })
     },
-   
 })

@@ -23,6 +23,7 @@ window.nodejs = {
     path,
     files,
     cli: require('../cli.js'),
+    bin: path.resolve(__dirname, '../bin'),
     method: function(data) {
         console.log(data);
         var d = data.msg;

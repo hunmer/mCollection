@@ -198,6 +198,10 @@ var g_modal = {
             onHide: function(e) {},
             onClose: function(e) {},
         }, opts || {})
+
+        if(Array.isArray(opts.extraButtons)){
+            opts.buttons.unshift(...opts.extraButtons)
+        }
         let style = Object.assign({}, this.style_get(opts.type))
         let html = style.html
             .replace('{title}', opts.title)
@@ -205,7 +209,7 @@ var g_modal = {
             .replace('{footer}', (() => {
                 let btns = '';
                 for (let btn of opts.buttons) {
-                    btns += `<button type="button" ${btn.id ? `id="btn_${btn.id}"` : ''} class="modal_btn btn mx-auto ${btn.class}" ${btn.attr || ''}>${btn.text}</button>`
+                    btns += `<button type="button" ${btn.id ? `id="btn_${btn.id}"` : ''} ${btn.action ? `data-action="${btn.action}"` : ''} class="modal_btn btn mx-auto ${btn.class}" ${btn.attr || ''}>${btn.text}</button>`
                 }
                 return opts.footer.replace('{btn}', btns)
             })())
@@ -262,7 +266,7 @@ var g_modal = {
         if (!opts.static) {
             modal.on('click', function(e) {
                 if (!inArea(e, modal.find('.modal-content'))) {
-                    modal.method('hide', e)
+                    modal.method(opts.once ? 'close' : 'hide', e)
                 }
             })
         }

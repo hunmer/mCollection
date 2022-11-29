@@ -160,6 +160,10 @@ var g_db = {
     db_import(path, opts) {
         try {
             let json = JSON.parse(nodejs.files.read(path + '/db.json'))
+            // 如果是云导入则把目录改成选中目录
+            // TODO 怎么判断是云导入？
+            // 因为本地素材库可能素材的位置会在别处
+            json.path = path
             this.db_edit(json)
         } catch (e) {
             this.db_edit({ path: path })
@@ -189,11 +193,12 @@ var g_db = {
     db_switch(name) {
         g_modal.remove('db_manager')
         console.log('加载数据库 ' + name)
-        if (isEmpty(name)) { // 不存在则弹出新建或者选择
+        let d = this.db_get(name)
+        if (!d || isEmpty(name)) { // 不存在则弹出新建或者选择
             return this.db_dbs().length ? this.db_manager() : this.db_edit()
         }
         setConfig('db', name)
-        let opts = copyObj(this.db_get(name))
+        let opts = copyObj(d)
         if (!isEmpty(this.current)) { // 
             return setTimeout(() => location.reload(), 200) // 搞个类似于videoManager那样账号的？？
         }
@@ -223,12 +228,20 @@ var g_db = {
     },
     // 创建新的数据库
     db_edit(key) {
-        let d = Object.assign({
+        let d
+        if( typeof(key) == 'object'){
+            d = copyObj(key)
+            key = new Date().getTime()
+        }else{
+            d = this.db_get(key)
+        }
+
+        d = Object.assign({
             title: '',
             path: '',
             icon: 'box',
             syncFolders: {},
-        }, typeof(key) == 'object' ? key : this.db_get(key))
+        }, d)
 
         let title = (key ? '编辑' : '创建') + '数据库'
         g_form.confirm('db_edit', {
@@ -291,7 +304,7 @@ var g_db = {
                         break
                     case 'btn_delete':
                         // todo 显示数据库素材数量以及是否删除数据库文件夹
-                        confirm('确定删除数据库【' + this.db_getVal(key) + '】吗?', {
+                        confirm('确定删除数据库【' + this.db_getVal(key, 'title') + '】吗?', {
                             title: '删除数据库',
                             type: 'danger'
                         }).then(() => {

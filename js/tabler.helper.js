@@ -1,26 +1,26 @@
 var g_tabler = {
 
     bind_all() {
-        
+
     },
     init() {
         $(document).
-        on('click', '.form-videocheck', function(e){
+        on('click', '.form-videocheck', function(e) {
             let input = this.querySelector('.form-videocheck-input')
             input.checked = !input.checked
             clearEventBubble(e)
         }).
-        on('click', '[data-bs-dropdown]', function(e){
+        on('click', '[data-bs-dropdown]', function(e) {
             let dropdown = this.dataset.bsDropdown
             // data-bs-auto-close
             let rect = this.getBoundingClientRect()
-            let div = $('#'+dropdown).find('.dropdown-menu')
+            let div = $('#' + dropdown).find('.dropdown-menu')
             div.css({
                 display: 'block',
                 position: 'fixed',
                 zIndex: 999,
                 left: rect.x - div.width(),
-                top:  rect.top - (div.height() - rect.height) / 2,
+                top: rect.top - (div.height() - rect.height) / 2,
             })
         })
         // $(this.bind_all());
@@ -29,12 +29,11 @@ var g_tabler = {
         //     console.log(action)
         // })
 
-        let error = console.error
-        console.error = msg => alert(msg, {title: '错误', type: 'danger'})
+        // let error = console.error
+        // console.error = msg => alert(msg, { title: '错误', type: 'danger' })
     },
 
-    build_accordion(opts) {
-        let groups = {}
+    build_accordion(opts, obj = true) {
         opts = Object.assign({
             onOpen: e => {},
             onClose: e => {},
@@ -44,34 +43,37 @@ var g_tabler = {
             emptyName: '默认分组',
             header: '',
         }, opts)
+
+        let groups = {}
         opts.datas.every((item, i) => {
             if (!groups[item.group]) groups[item.group] = []
-            groups[item.group].push(i)
+            groups[item.group].push(item)
             return true
         })
         let h = '';
+        let i = 0
         let id = opts.id || new Date().getTime()
-        for (let group in groups) {
-            h += `
-                  <div class="accordion-item" id="accordion-${id}-${group}">
-                    <h2 class="accordion-header">
-                      <button data-collapse="${group}" class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-${id}-${group}" aria-expanded="true">
-                        ${opts.header.replace('{i}', groups[group].length) || _l(group) || opts.emptyName}
-                      </button>
-                    </h2>
-
+        for (let [group, items] of Object.entries(groups)) {
+            h += ` <div class="accordion-item" id="accordion-${id}-${group}">
+                <h2 class="accordion-header">
+                  <button data-collapse="${group}" class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-${id}-${group}" aria-expanded="true">
+                    ${opts.header.replace('{index}', ++i).replace('{i}', groups[group].length).replace('{title}',_l(group) || opts.emptyName)}
+                  </button>
+                </h2>`
+            for (let item of items) {
+                h += `
                     <div id="collapse-${id}-${group}" class="accordion-collapse collapse ${opts.default === true || group == opts.default ? 'show' : ''}" ${opts.parent ? `data-bs-parent="#accordion-${id}"` : ''}>
                           <div class="accordion-body pt-0" >
                           ${opts.collapse_start}
-            `
-            for (let index of groups[group]) {
-                h += this.parseItem(opts.datas[index])
-            }
-            h += `${opts.collapse_end}
+                          ${item.html}
+                          ${opts.collapse_end}
                           </div>
                     </div>
-                  </div>`
+                    `
+            }
+            h += `</div>`
         }
+        if (!obj) return h
 
         let div = $(`<div class="accordion" id="accordion-${id}">` + h + '</div>')
         div.find('[data-bs-toggle="collapse"]').on('click', function(e) {
@@ -84,12 +86,25 @@ var g_tabler = {
         return div
     },
 
-    parseItem(item){
-        if(item.html) return item.html
-        if(item.icon){
-            
-        }
+    build_checkbox_list(d) {
+        let h = ''
+        let {keys, vals} = ObjMaps(d.list)
+        keys.forEach((k, i) => {
+            h += `
+            <label class="form-check">
+              <input class="form-check-input" type="checkbox" value="${k}" ${k == d.value ? 'checked' : ''}>
+              <span class="form-check-label">${vals[i]}</span>
+            </label>
+            `
+        })
+        return `<div id="${d.id}">${h}</div>`
     }
+}
+
+function ObjMaps(obj){
+    let vals = Object.values(obj)
+    let keys = Array.isArray(obj) ? [...vals] : Object.keys(obj)
+    return {keys, vals}
 }
 
 g_tabler.init();

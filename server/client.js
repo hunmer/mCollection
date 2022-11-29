@@ -1,8 +1,8 @@
 var g_client = {
     url: 'ws://127.0.0.1:41594',
     init() {
-       this.connect()
-       loadRes([_dataPath+'\\resources\\app\\server\\tasker.js'])
+        this.recon()
+        loadRes([_dataPath + '\\resources\\app\\server\\tasker.js'])
     },
     setConnected(b) {
         // getEle('channel_startServer').toggleClass('hide', b);
@@ -11,11 +11,66 @@ var g_client = {
         //     .addClass('bg-' + (b ? 'success' : 'danger'))
         //     .find('b').html(b ? '连接成功' : '连接失败');
     },
+    tryStartServer() {
+        fetch('http://127.0.0.1:41597').then(response => response.json()).then(data => {
+            if (data.status != 'success') {
+                this.startSever()
+            } else {
+                // fetch("http://localhost:41597/api/item/addFromPaths", {
+                //         method: 'POST',
+                //         headers: {
+                //             'Content-Type': 'application/json'
+                //             // 'Content-Type': 'application/x-www-form-urlencoded',
+                //         },
+                //         body: JSON.stringify({
+                //             items: [{
+                //                 path: 'I:\\software\\videoManager\\resources\\app\\cuts\\1666930183179.mp4',
+                //                 name: '1666930183179.mp4',
+                //                 tags: ['tag1', 'tag2'],
+                //             }, {
+                //                 path: 'I:\\software\\videoManager\\resources\\app\\cuts\\1666929924762.mp4',
+                //                 name: '1666929924762.mp4',
+                //                 tags: ['tag1', 'tag2'],
+                //             }, {
+                //                 path: 'I:\\software\\videoManager\\resources\\app\\cuts\\1666925184266.mp4',
+                //                 name: '1666925184266.mp4',
+                //                 tags: ['tag1', 'tag2'],
+                //             }]
+                //         }),
+                //     })
+                //     .then(response => response.json())
+                //     .then(result => {
+                //         console.log(result)
+                //     })
+                //     .catch(error => console.log('导入失败,请确保eagle在后台运行!'));
+
+            }
+            // setTimeout(() => process.kill(-child.pid), 3000)
+        }).catch(error => {
+            this.startSever()
+        });
+    },
+    startSever() {
+        let _path = __dirname + '\\server\\'
+        // 随着刷新而刷新
+        this.child = nodejs.cli.run(_path + 'node.exe', _path + 'server.js', {
+            // detached: true
+        }, {
+            onOutput: function(msg) {
+                console.log(msg)
+            },
+            onExit: () => {
+                console.log('exit')
+            }
+        })
+        // console.log(this.child)
+    },
     recon(recon = true) {
         let self = this;
         self.reconnect && clearTimeout(self.reconnect);
         if (recon && this.reconable) {
-            self.reconnect = setTimeout(() => self.connect(), 1000 * 3)
+            this.tryStartServer()
+            self.reconnect = setTimeout(() => self.connect(), 1000)
         }
     },
     reconable: true,
@@ -30,7 +85,8 @@ var g_client = {
         if (self.connection) self.connection.close();
         let socket = self.connection = new WebSocket(url || this.url);
         socket.onopen = () => {
-            if(!this.lastConnect){ // 初次连接
+            if (!this.lastConnect) { // 初次连接
+
             }
             this.lastConnect = new Date().getTime()
             self.reconable = true;
@@ -106,12 +162,12 @@ var g_client = {
         let s = JSON.stringify(r)
         if (!this.isConnected()) {
             this.sendList.push(s)
-        }else{
+        } else {
             this.connection.send(s);
         }
     },
 
-   
+
 
 }
 

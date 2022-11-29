@@ -3,7 +3,7 @@ var g_videoTabs = {
 
 
         g_tabs.init({
-            saveData: (name, data) => local_saveJson('tabs_' + name, data),
+            saveData: (name, data) => false && local_saveJson('tabs_' + name, data),
             getData: name => local_readJson('tabs_' + name, {}),
         })
 
@@ -13,7 +13,7 @@ var g_videoTabs = {
                 return `
                 <div class="datalist h-full">
                     <div id="player" class="w-full h-full p-2 pt-0">
-                        <video src="${v.data.file}" poster="" class="w-full h-full "></video>
+                        <video src="${v.data.file}" poster="" class="w-full h-full"></video>
                     </div>
                 </div>
                 `
@@ -28,14 +28,14 @@ var g_videoTabs = {
                 g_clipTabs.videoTabEvent('close', tab)
             },
         })
-        g_videoTabs.tab_new({
-            file: 'res/1.mp4',
-            title: '文件1',
-        })
-        g_videoTabs.tab_new({
-            file: 'res/2.mp4',
-            title: '文件2',
-        })
+        // g_videoTabs.tab_new({
+        //     file: 'res/1.mp4',
+        //     title: '文件1',
+        // })
+        // g_videoTabs.tab_new({
+        //     file: 'res/2.mp4',
+        //     title: '文件2',
+        // })
     },
 
 

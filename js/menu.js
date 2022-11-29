@@ -1,7 +1,7 @@
 var g_menu = {
     down: {},
     list: {},
-    init: function() {
+    init() {
         this.style = $(`<style>
             ._menu {
                 position: fixed;
@@ -15,19 +15,21 @@ var g_menu = {
         </style>`).appendTo('body') 
     },
     // 构造菜单
-    buildItems: function(list) {
+    buildItems(list) {
         let h = ''
         for (let item of list) {
             h += item.html || `
                 <a class="list-group-item list-group-item-action ${item.class}" aria-current="true" data-action="${item.action}">
-                  ${item.icon ? `<i class="ti ti-${item.icon} mr-2 ${item.icon_class || ''}"></i>` : ''}${item.text}
+                  ${item.icon ? `<i class="ti ti-${item.icon} mr-2 ${item.icon_class || ''}"></i>` : ''}
+                  <span>${item.text}</span>
                 </a>
             `
         }
         return `<div class="list-group list-group-flush">${h}</div>`
     },
+
     // 隐藏菜单
-    hideMenu: function(key) {
+    hideMenu(key) {
         let menu = this.getMenu(key)
         delete g_menu.key
         delete this.target
@@ -35,28 +37,28 @@ var g_menu = {
         menu.onHide && menu.onHide()
     },
     // 注销菜单
-    unregisterMenu: function(name) {
+    unregisterMenu(name) {
         delete g_menu.list[name];
     },
     // 注册菜单
-    registerMenu: function(opts) {
+    registerMenu(opts) {
         opts = Object.assign({
             css: '',
+            html: '',
             overlayer: false,
         }, opts)
         this.list[opts.name] = opts;
         let id = 'rm_' + opts.name;
 
         if(opts.overlayer) opts.css += 'background-color: rgba(0, 0, 0, .5);'
-
         let div = $(`
             <div id="${id}" class="_menu" style="${opts.css}" oncontextmenu="g_menu.hideMenu('${opts.name}')">
-                <div class="menu bg-white row position-absolute border rounded w-auto" style="min-width: 150px;" >
+                <div class="menu card row position-absolute border rounded w-auto" style="min-width: 150px;" >
                     ${opts.html}
                 </div>
             </div>
         `)
-            .on('click', function(e) {
+         .on('click', function(e) {
                 let child = $(this).find('.menu');
                 if (event.target == this) {
                     let x = event.clientX;
@@ -80,17 +82,16 @@ var g_menu = {
         });
     },
     // 获取菜单
-    getMenu: function(name) {
+    getMenu(name) {
         return this.list[name];
     },
 
     // 展示菜单
     // TODO 更加简洁的写法
-    showMenu: function(name, dom, event) {
+    showMenu(name, dom, event) {
         let opts = g_menu.getMenu(name);
         let id = 'rm_' + opts.name;
         let key;
-
         if (typeof(opts.dataKey) == 'function') {
             key = opts.dataKey(dom)
         } else
@@ -99,36 +100,41 @@ var g_menu = {
         }
         g_menu.target = dom;
         g_menu.key = key;
-        opts.onShow && opts.onShow(key);
-
+        
         let par = $('#' + id).attr('data-key', key).show();
         let div = par.find('.menu');
-        let i = div.width() / 2;
-        let x = event.pageX;
-        let mw = $(window).width();
-        if (x + i > mw) {
-            x = mw - div.width();
-        } else {
-            x -= i;
-            if (x < 30) x = 30;
+        if(opts.items){ // 动态items
+            div.html(this.buildItems(opts.items))
         }
+        opts.onShow && opts.onShow(key);
+        g_plugin.callEvent('menu_show', { key,dom,par}).then(() => {
+             let i = div.width() / 2;
+            let x = event.pageX;
+            let mw = $(window).width();
+            if (x + i > mw) {
+                x = mw - div.width();
+            } else {
+                x -= i;
+                if (x < 30) x = 30;
+            }
 
-        // let y = event.pageY + 20;
-        let y = event.pageY;
-        let h = div.height();
-        let mh = $(window).height();
-        if (mh - y < h) {
-            y -= h;
-        }
+            // let y = event.pageY + 20;
+            let y = event.pageY;
+            let h = div.height();
+            let mh = $(window).height();
+            if (mh - y < h) {
+                y -= h;
+            }
 
-        div.css({
-            left: x + 'px',
-            top: y + 'px',
-        });
+            div.css({
+                left: x + 'px',
+                top: y + 'px',
+            });
+        })
     },
 
     // 底层方法
-    registerContextMenu: function(selector, callback) {
+    registerContextMenu(selector, callback) {
         let down = this.down;
         $('body')
             .on('touchstart', selector, function(event) {

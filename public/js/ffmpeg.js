@@ -2,7 +2,6 @@ var g_ffmpeg = {
     init() {
         this.path = require('path')
         // this.task_add([])
-
     },
 
     tasks: {},
@@ -22,7 +21,7 @@ var g_ffmpeg = {
 
     async video_cover(md5, time = 0) {
         let d = await g_data.data_get(md5)
-        let file =  g_item.item_getVal('file', d)
+        let file = g_item.item_getVal('file', d)
         if (!nodejs.files.exists(file)) return
         let saveTo = g_db.getSaveTo(md5) + 'cover.jpg'
 
@@ -36,10 +35,30 @@ var g_ffmpeg = {
         })
     },
 
+    video_cut(opts, onProgress, callback) {
+        nodejs.files.makeSureDir(opts.output)
+        this.task_add(
+            new nodejs.cli.ffmpeg(opts.input, Object.assign(opts, {progress: true}))
+            .on('start', function(cmd) {
+                onProgress('waitting')
+            })
+            .on('progress', function(progress) {
+               onProgress(parseInt(toTime(progress) / opts.duration * 100) + '%');
+            })
+            .on('error', function(e) {
+                callback(e)
+            })
+            .on('end', function(str) {
+                callback();
+            }).save(opts.output));
+    },
+
+
     // 封面裁剪
     video_cover1(opts, callback) {
         nodejs.files.makeSureDir(opts.output)
-        let obj = new nodejs.cli.ffmpeg(opts.input)
+        this.task_add(
+            new nodejs.cli.ffmpeg(opts.input, opts)
             .screenshots({
                 timestamps: opts.params,
                 folder: this.path.dirname(opts.output),
@@ -49,13 +68,15 @@ var g_ffmpeg = {
                 callback();
             }).on('error', function() {
 
-            });
+            }));
     },
 
     // 视频信息
     video_meta(input, callback) {
         return new Promise(reslove => {
-            nodejs.cli.ffprobe(input).then(metadata => {
+            nodejs.cli.ffprobe(input, {
+                env: getProxy()
+            }).then(metadata => {
                 typeof(callback) == 'function' ? callback(metadata): reslove(metadata)
             });
         })
@@ -74,7 +95,7 @@ var g_ffmpeg = {
             .setParam('-frames:v', '1')
             .on('end', function() {
                 // TODO 当前preview 更新封面
-                
+
             })
             .on('error', function(err) {
                 console.log(err)
@@ -83,6 +104,8 @@ var g_ffmpeg = {
     }
 }
 
+
+ 
 g_ffmpeg.init()
 // g_ffmpeg.video_cover1({
 //  params: 0,
@@ -92,3 +115,4 @@ g_ffmpeg.init()
 // }, (...args) => console.log(args))
 
 // g_ffmpeg.video_meta('X:\\aaa\\videos\\1660754068786.mp4', meta => console.log(meta))
+

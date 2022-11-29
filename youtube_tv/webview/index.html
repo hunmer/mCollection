@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Browser</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <meta name="theme-color" content="#000000">
+    <meta name="msapplication-navbutton-color" content="#000000">
+    <meta name="apple-mobile-web-app-status-bar-style" content="#000000">
+    <meta name="description" content="">
+    <meta name="author" content="hunmer">
+    <meta name="keywords" content="">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="">
+    <meta property="og:title" content="Browser">
+    <meta property="og:description" content="">
+    <meta property="og:image" content="favicon.ico">
+    <link rel="shortcut icon" href="favicon.ico">
+    <meta http-equiv="pragma" content="no-cache" />
+    <meta http-equiv="content-type" content="no-cache, must-revalidate" />
+    <!-- <meta http-equiv="expires" content="Wed, 26 Feb 1997 08:21:57 GMT" /> -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-touch-fullscreen" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="full-screen" content="yes">
+    <meta name="browsermode" content="application">
+    <meta name="x5-fullscreen" content="true">
+    <meta name="x5-page-mode" content="app">
+    <meta name="Author" contect="liaoyanjie2000@gmail.com">
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="favicon.ico" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="favicon.ico" />
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="favicon.ico" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="favicon.ico" />
+    <meta name="referrer" content="never">
+    <link rel="stylesheet" href="../../public/css/tabler.min.css" />
+    <link rel="stylesheet" href="../../public/css/tabler-icons.min.css">
+    <link rel="stylesheet" href="../../public/css/index.css">
+    <link rel="stylesheet" href="css/index.css">
+</head>
+
+<body>
+    <main>
+        <div class="card mb-2 pb-3 _content" data-site="main">
+            <div class="card-header p-0">
+                <div class="input-group input-group-flat">
+                    <span class="input-group-text">
+                        <a data-action="web_back" class="link-secondary fs-2 mr-2 disabled" title="后退" data-bs-toggle="tooltip">
+                            <i class="ti ti-arrow-narrow-left"></i>
+                        </a>
+                        <a data-action="web_forward" class="link-secondary fs-2 mr-2 disabled" title="前进" data-bs-toggle="tooltip">
+                            <i class="ti ti-arrow-narrow-right"></i>
+                        </a>
+                        <a data-action="web_refresh" class="link-secondary fs-2 mr-2" title="刷新" data-bs-toggle="tooltip">
+                            <i class="ti ti-refresh"></i>
+                        </a>
+                    </span>
+                    <input type="text" class="form-control form-control-rounded" autocomplete="off" placeholder="输入URL" data-keyup="keyup_url" id="input_url">
+                    <span class="input-group-text">
+                        <a data-action="web_parse" class="link-secondary fs-2 hide mr-2" title="解析" data-bs-toggle="tooltip">
+                             <i class="ti ti-link"></i>
+                        </a>
+
+                        <a data-action="web_newTab" class="link-secondary fs-2" title="新标签" data-bs-toggle="tooltip">
+                            <i class="ti ti-plus"></i>
+                        </a>
+                        <a data-action="web_go" class="link-secondary ms-2 fs-2 disabled" title="跳转" data-bs-toggle="tooltip">
+                            <i class="ti ti-arrow-big-right"></i>
+                        </a>
+                    </span>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <group data-group="main"></group>
+            </div>
+        </div>
+    </main>
+    <script src="renderer.js"></script>
+    <script src="../../public/js/until.js"></script>
+    <script src="../../js/jquery.min.js"></script>
+    <script src="../../js/tabler.min.js"></script>
+    <script src="../../js/action.js"></script>
+    <script src="../../js/modal.js"></script>
+    <script src="../../js/menu.js"></script>
+    <script src="../../public/js/hotkey.js"></script>
+    <script src="../../public/js/setting.js"></script>
+    <script src="../../public/js/plugins.js"></script>
+    <script src="js/plugins.js"></script>
+    <script src="js/setting.js"></script>
+    <script src="js/hotkey.js"></script>
+    <script src="js/tabs.js"></script>
+    <script src="js/index.js"></script>
+</body>
+
+</html>

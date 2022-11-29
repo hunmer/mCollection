@@ -136,7 +136,6 @@ registerApi('/api/item/addFromURLs', 'post', (req, res) => {
         "status": "success"
     });
     saveImages(req.body);
-
 })
 
 function broadcastData(data) {

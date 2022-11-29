@@ -1,0 +1,16 @@
+/**
+ * Skipped minification because the original files appears to be already minified.
+ * Original file: /npm/@easepick/preset-plugin@1.2.0/dist/index.umd.js
+ *
+ * Do NOT use SRI with dynamically generated files! More information: https://www.jsdelivr.com/using-sri-with-dynamic-files
+ */
+/**
+* @license
+* Package: @easepick/preset-plugin
+* Version: 1.2.0
+* https://easepick.com/
+* Copyright 2022 Rinat G.
+* 
+* Licensed under the terms of GNU General Public License Version 2 or later. (http://www.gnu.org/licenses/gpl.html)
+*/
+!function(e,t){"object"==typeof exports&&"undefined"!=typeof module?t(exports,require("@easepick/datetime"),require("@easepick/base-plugin")):"function"==typeof define&&define.amd?define(["exports","@easepick/datetime","@easepick/base-plugin"],t):t((e="undefined"!=typeof globalThis?globalThis:e||self).easepick=e.easepick||{},e.easepick,e.easepick)}(this,(function(e,t,i){"use strict";class s extends i.BasePlugin{dependencies=["RangePlugin"];binds={onView:this.onView.bind(this),onClick:this.onClick.bind(this)};options={customLabels:["今天","昨天","一周内","一个月内","本月","上月"],customPreset:{},position:"left"};getName(){return"PresetPlugin"}onAttach(){if(!Object.keys(this.options.customPreset).length){const e=new t.DateTime,i=()=>{const i=e.clone();i.setDate(1);const s=new Date(e.getFullYear(),e.getMonth()+1,0);return[new t.DateTime(i),new t.DateTime(s)]},s=()=>{const i=e.clone();i.setMonth(i.getMonth()-1),i.setDate(1);const s=new Date(e.getFullYear(),e.getMonth(),0);return[new t.DateTime(i),new t.DateTime(s)]},n=[[e.clone(),e.clone()],[e.clone().subtract(1,"day"),e.clone().subtract(1,"day")],[e.clone().subtract(6,"day"),e.clone()],[e.clone().subtract(29,"day"),e.clone()],i(),s()];Object.values(this.options.customLabels).forEach(((e,t)=>{this.options.customPreset[e]=n[t]}))}this.picker.on("view",this.binds.onView),this.picker.on("click",this.binds.onClick)}onDetach(){this.picker.off("view",this.binds.onView),this.picker.off("click",this.binds.onClick)}onView(e){const{view:t,target:i}=e.detail;if("Main"===t){const e=document.createElement("div");e.className="preset-plugin-container",Object.keys(this.options.customPreset).forEach((t=>{if(Object.prototype.hasOwnProperty.call(this.options.customPreset,t)){const i=this.options.customPreset[t],s=document.createElement("button");s.className="preset-button unit",s.innerHTML=t,s.dataset.start=i[0].getTime(),s.dataset.end=i[1].getTime(),e.appendChild(s),this.picker.trigger("view",{view:"PresetPluginButton",target:s})}})),i.appendChild(e),i.classList.add(`preset-${this.options.position}`),this.picker.trigger("view",{view:"PresetPluginContainer",target:e})}}onClick(e){const i=e.target;if(i instanceof HTMLElement){const e=i.closest(".unit");if(!(e instanceof HTMLElement))return;if(this.isPresetButton(e)){const i=new t.DateTime(Number(e.dataset.start)),s=new t.DateTime(Number(e.dataset.end));this.picker.options.autoApply?(this.picker.setDateRange(i,s),this.picker.trigger("select",{start:this.picker.getStartDate(),end:this.picker.getEndDate()}),this.picker.hide()):(this.picker.datePicked=[i,s],this.picker.renderAll())}}}isPresetButton(e){return e.classList.contains("preset-button")}}e.PresetPlugin=s,Object.defineProperty(e,"__esModule",{value:!0})}));

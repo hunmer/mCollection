@@ -16,6 +16,7 @@ class Sizeable {
                 }
             }
         }, opts)
+        this.element().addClass('sizeable')
     }
 
     element() {
@@ -49,14 +50,15 @@ class Sizeable {
             cursor: (['top', 'bottom'].includes(pos) ? 's' : 'e') + '-resize'
         }, rect, this.opts.style)
 
-        let div = $('.sizeable')
+        let div = $('.sizebar')
         if (div.length) {
             div.css(style) // 已存在，仅更新css属性
         } else {
             this.dragger = $(`
-			<div class="sizeable" data-pos="${pos}">
-			</div>
-		`).css(style).appendTo('body').on('mousedown', function(e) {
+            <div class="sizebar" data-pos="${pos}">
+            </div>
+        `).css(style).appendTo('body').on('mousedown', function(e) {
+                if (g_sizeable.stopDragging()) return
                 setTimeout(() => {
                     g_sizeable.dragging = {
                         pos,
@@ -76,6 +78,12 @@ var g_sizeable = {
     outCnt: 0,
     instace: {},
     inited: {}, // 已经恢复过位置的div
+    stopDragging() {
+        let dragging = typeof(g_sizeable.dragging) != 'undefined'
+        delete g_sizeable.dragging
+        $('.sizebar').remove()
+        return dragging
+    },
     init(funs = {}) {
         const self = this
         let init = funs.init
@@ -86,14 +94,11 @@ var g_sizeable = {
         Object.assign(this, funs)
 
         this.data = g_sizeable.getData('sizeable', {})
-        $(window).on('mouseup', e => {
-            if (g_sizeable.dragging) {
-                delete g_sizeable.dragging
-            }
-        })
-        // .on('mousemove', e => {
-        // 	g_cache.mouse = e
-        // })
+        $(window).on('mouseup', e => this.stopDragging())
+            .on('mousemove', e => {
+                g_cache.mouse = e.originalEvent
+            })
+            .on('blur', e => this.stopDragging())
         this.timer()
     },
     set(k, v, save = true) {
@@ -143,24 +148,24 @@ var g_sizeable = {
                     let target = dragging.target[0]
                     let rect = target.getBoundingClientRect()
                     let i
-                    let t = ['left', 'right'].includes(dragging.pos) ? 'width': 'height'
+                    let t = ['left', 'right'].includes(dragging.pos) ? 'width' : 'height'
                     // 取拖动后大小
-                    switch(dragging.pos){
-                    	case 'left':
-                    		i = rect.right - x
-                    		break;
+                    switch (dragging.pos) {
+                        case 'left':
+                            i = rect.right - x
+                            break;
 
-                    	case 'right':
-                    		i = x - rect.left
-                    		break;
+                        case 'right':
+                            i = x - rect.left
+                            break;
 
-                    	case 'top':
-                    		i = y - rect.top
-                    		break;
+                        case 'top':
+                            i = rect.top - y + rect.height
+                            break;
 
-                    	case 'bottom':
-                    		i =  rect.bottom - y
-                    		break;
+                        case 'bottom':
+                            i = rect.bottom - y
+                            break;
                     }
                     let min = opts[t + '_min'] || 0
                     let max = opts[t + '_max'] || 9999
@@ -169,27 +174,19 @@ var g_sizeable = {
                     } else
                     if (i > max) {
                         i = max
+                        this.stopDragging()
                     }
                     inst.show(dragging.pos, getRect(target, dragging.pos, opts.size)) // 更新拖动条的位置
                     opts.changed(t, i)
+                } else {
+                    if ($('.dropdown-menu.show').length) return // dropdown不显示
+                    if (!$(g_cache.mouse.target).parents('.sizeable').length) return
                 }
-            }
 
-            for (let [id, inst] of Object.entries(this.instace)) {
-                let ele = inst.element()
-                if (ele.length) {
-
-                    // 还原上次位置
-                    let memory = this.data[id]
-                    if (this.inited[id] != memory) {
-                        this.inited[id] = memory
-                        for (let [k, v] of Object.entries(memory)) {
-                            inst.opts.changed(k, v)
-                        }
-                    }
-
-                    if (g_cache.mouse) {
-                        let find
+                for (let [id, inst] of Object.entries(this.instace)) {
+                    let ele = inst.element()
+                    if (ele.length) {
+                        let find;
                         let { x, y } = g_cache.mouse
                         inst.opts.allow.forEach(pos => {
                             let { left, top, bottom, right, width, height } = getRect(ele[0], pos, inst.opts.size) // 取调整后的拖动条位置
@@ -206,7 +203,7 @@ var g_sizeable = {
 
                         if (!find && self.showing) {
                             if (++self.outCnt >= 6) { // 300ms后隐藏
-                                $('.sizeable').remove()
+                                $('.sizebar').remove()
                                 delete self.showing
                             }
                         }
@@ -215,49 +212,22 @@ var g_sizeable = {
             }
         }, 50)
     },
-    register(id, otps) {
-        let obj = new Sizeable(id, otps)
+    register(id, opts) {
+        let obj = new Sizeable(id, opts)
         this.instace[id] = obj
+        g_sizeable.restore(id)
         return obj
     },
 
-}
-g_sizeable.init({
-    saveData: (name, data) => local_saveJson(name, data),
-    getData: (name, def) => local_readJson(name, def || {}),
-})
-g_sizeable.register('sidebar_left', {
-    selector: '#sidebar_left',
-    memory: true,
-    allow: ['right'],
-    width_min: 200,
-    width_max: 500,
-     style: {
-    	backgroundColor: 'unset',
-    },
-    change: (t, i) => {
-        if (t == 'width') { // 调整宽度
-            // 设置css变量就OK
-            setCssVar('--offset-left', i + 'px')
-            return { resize: false }
+    restore(id) {
+        // 还原上次位置
+        let memory = this.data[id]
+        if (this.inited[id] != memory) {
+            this.inited[id] = memory
+            for (let [k, v] of Object.entries(memory)) {
+                this.instace[id].opts.changed(k, v)
+            }
         }
-    }
-})
+    },
 
-g_sizeable.register('sidebar_right', {
-    selector: '#sidebar_right',
-    memory: true,
-    allow: ['left'],
-    width_min: 200,
-    width_max: 700,
-    style: {
-    	backgroundColor: 'unset',
-    },
-    change: (t, i) => {
-        if (t == 'width') { // 调整宽度
-            // 设置css变量就OK
-            setCssVar('--offset-right', i + 'px')
-            return { resize: false }
-        }
-    }
-})
+}

@@ -91,7 +91,11 @@ ipcRenderer.on('closeTab', (event, id) => {
     g_tabs.ids_remove(id)
 });
 ipcRenderer.on('exit', (event, args) => {
-    g_downloader.aria2c.exit()
+    // g_downloader.aria2c.exit()
+    fetch('http://127.0.0.1:41597/exit')
+    setTimeout(() => {
+       send('exit');
+    }, 1500)
 });
 
 // 文件对话框 回调
@@ -161,8 +165,14 @@ window.nodejs = {
                 }
                 break;
             default:
-                ipcRenderer.send('method', data);
+                send( data);
                 break;
         }
     }
+}
+
+function send(data, method = 'method'){
+    if(typeof(data) != 'object') data = {type: data}
+   ipcRenderer.send(method, data);
+
 }

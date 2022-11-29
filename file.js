@@ -1,4 +1,4 @@
-const fs = require("fs");
+const fs = require("fs-extra");
 var { shell } = require('electron');
 const crypto = require('crypto')
 var spawn = require("child_process").spawn;
@@ -94,9 +94,6 @@ const files = {
             resolve();
         });
     },
-    getPath: (p) => {
-        return replaceAll_once(p, '*path*', replaceAll_once(__dirname, '\\', '\/'));
-    },
     openFile: (path) => {
         if (!fs.existsSync(path)) return false
         shell.openPath(path)
@@ -107,23 +104,26 @@ const files = {
         shell.showItemInFolder(path)
         return true
     },
+    readFile: (file) => {
+        if(fs.existsSync(file)){
+            return fs.readFileSync(file)
+        }
+    },
     read: (file, def) => {
-        var file = files.getPath(file);
         return fs.existsSync(file) ? fs.readFileSync(file).toString() : def
     },
     exists: (path) => {
-        return fs.existsSync(files.getPath(path))
+        return fs.existsSync(path)
     },
     isFile: (path) => fs.existsSync(path) && fs.statSync(path).isFile(),
     isDir: (path) => fs.existsSync(path) && fs.statSync(path).isDirectory(),
     mkdir: (dir) => {
-        return mkdirsSync(files.getPath(dir))
+        return mkdirsSync(dir)
     },
     makeSureDir: (file) => {
-        files.mkdir(path.dirname(file))
+        mkdirsSync(path.dirname(file))
     },
     write: (file, content) => {
-        file = files.getPath(file);
         files.mkdir(path.dirname(file)) && fs.writeFileSync(file, content)
     },
     searchDirFiles: (dir, list, fileExts, C) => {
@@ -142,9 +142,14 @@ const files = {
             }
         });
     },
-    dirFiles(dir, fileExts, callback) {
+    dirFiles(dirs, fileExts, callback) {
         let list = [];
-        this.searchDirFiles(dir, list, fileExts)
+        if(!Array.isArray(dirs)) dirs = [dirs]
+        dirs.forEach(dir => {
+            if(files.isDir(dir)){
+                this.searchDirFiles(dir, list, fileExts)
+            }
+        })
         callback(list)
     },
     items: (dir) => {
@@ -166,7 +171,6 @@ const files = {
     },
     getExtension: (file) => path.extname(file).replace('.', ''),
     remove: (file) => {
-        file = files.getPath(file)
         fs.existsSync(file) && fs.rmSync(file)
     },
     copySync: (oldFile, newFile) => {
@@ -210,9 +214,17 @@ const files = {
         });
         return res;
     },
+    getImageBase64(file) {
+        return 'data: image/' + getImageType(file) + ';base64,' + new Buffer(fs.readFileSync(file), 'binary').toString('base64');
+    },
     isEmptyDir: (dir) => fs.readdirSync(dir).length == 0,
     removeDir: (dir) => fs.rmSync(dir, { recursive: true, force: true }),
     stat: (file) => files.exists(file) && fs.statSync(file),
+}
+
+function getImageType(str){
+    var reg = /\.(png|jpg|gif|jpeg|webp)$/;
+    return str.match(reg)[1];
 }
 
 

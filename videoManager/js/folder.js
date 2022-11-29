@@ -2,7 +2,6 @@ g_action.registerAction({
       folder_subFolders: dom => g_folder.showFolder(dom.dataset.folder)
   })
 
-
 g_folder.init({
    getCurrent(){
       return this.currentFolder

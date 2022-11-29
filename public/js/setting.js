@@ -1,9 +1,6 @@
 var g_setting = {
-    default: {
-       
-    }, 
+    default: {}, 
     tabs: {},
-
     getTab(name) {
         return this.tabs[name]
     },
@@ -21,7 +18,7 @@ var g_setting = {
                              <a href='#' data-action="${item.action || 'settings,'+tab}" class="nav-link ${tab == action[1] ? 'active' : ''}" role="tab"><i class="ti ti-${item.icon} me-2"></i>${item.title}</a>
                         </li>`
                 }
-
+                
                 g_form.confirm('settings', {
                     class: 'pt-0',
                     elements: Object.assign(opts.elements, {
@@ -39,12 +36,14 @@ var g_setting = {
                     title: '设置',
                     bodyClass: 'p-0',
                     btn_ok: '保存',
+                    once: true,
                     onBtnClick: (btn, modal) => {
                         if (btn.id == 'btn_ok') {
                             for (let [k, v] of Object.entries(g_form.getChanges('settings'))) {
                                 setConfig(k, v)
                             }
                         }
+                        modal.remove()
                     }
                 })
             },
@@ -104,9 +103,8 @@ var g_setting = {
             for (let n of k) r[n] = g_config[n]
             return r
         }
-
         var v = g_config[k];
-        if (v == undefined) v = def || this.getDefault(k);
+        if (typeof(v) == 'undefined') v = def != undefined ? def : this.getDefault(k);
         return v;
     },
 
@@ -117,7 +115,12 @@ var g_setting = {
     },
 
     setDefault(k, v) {
-        this.default[k] = v
+        let isArr = Array.isArray(k)
+        if (typeof(k) == 'object' && !isArr) {
+            Object.assign(this.default, k)
+        }else{
+            [].concat(k).forEach(_k => this.default[k] = v)
+        }
     },
 
     getDefault(k) {
@@ -143,3 +146,8 @@ function getConfig(k, def) {
 function setConfig(k, v) {
     return g_setting.setConfig(k, v)
 }
+
+ function getProxy() {
+     let proxy = getConfig('proxy')
+     return proxy ? { proxy, http_proxy: proxy, https_proxy: proxy } : {}
+ }

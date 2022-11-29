@@ -130,6 +130,7 @@ var g_item = {
     selected_list() {
         return $('.item_selected')
     },
+    
     // 返回选中md5
     selected_keys() {
         let r = []
@@ -174,15 +175,14 @@ var g_item = {
                         // TODO 判断是否文件类型
                         // 图像的话就生成小图片
                         // 判断云盘文件是否存在会卡顿
-                        if (!nodejs.files.exists(v)) {
-                            // 网络封面 OR 本地图片
-                            v = d.json.cover
-                            if (isEmpty(v)) {
-                                v = './res/loading.gif' // 生成封面
-                                g_ffmpeg.video_cover(d.md5)
-                            }
-                        }
-
+                        // if (!nodejs.files.exists(v)) {
+                        //     // 网络封面 OR 本地图片
+                        //     v = d.json.cover
+                        //     if (isEmpty(v)) {
+                        //         v = './res/loading.gif' // 生成封面
+                        //         g_ffmpeg.video_cover(d.md5)
+                        //     }
+                        // }
                         break;
                 }
                 r[n] = v

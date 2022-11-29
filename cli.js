@@ -1,29 +1,32 @@
 var child_process = require('child_process');
+const iconv = require("iconv-lite");
 
-function run(exe, cmds, opts, events) {
+function run(exe, cmds, opts = {}, events = {}) {
     if (!Array.isArray(cmds)) cmds = cmds.split(' ');
-    // console.log(exe, cmds);
-    let child = child_process.spawn(exe, cmds, Object.assign({
+    opts = Object.assign({
         shell: true,
         // cwd: '',
         windowsHide: true,
-        env: { proxy: 'http://127.0.0.1:1080', http_proxy: 'http://127.0.0.1:1080', https_proxy: 'http://127.0.0.1:1080' },
-    }));
-    child.stdout.setEncoding('utf8');
-    child.stderr.setEncoding('utf8');
+        maxBuffer: 1024 * 3000,
+    }, opts || {})
+    console.log(exe, cmds.join(' '), opts);
+    let child = child_process.spawn(exe, cmds, opts);
 
+    // 中文要用iconv 英文就不能用
     if (events.onOutput) {
-        child.stdout.on('data', d => {
-            events.onOutput(d.toString());
-        })
-        child.stderr.on('data', d => {
-            events.onOutput(d.toString());
-        })
+        let output = d => events.onOutput(opts.iconv ? iconv.decode(Buffer.from(d, 'binary'), 'cp936').trim() : d.toString())
+        child.stdout.on('data', output)
+        child.stderr.on('data', output)
     }
 
-    events.onError && child.on('error', function() {
-        events.onError.apply(this, arguments);
-    })
+    if (events.onError) {
+        child.on('error', function() {
+            events.onError.apply(this, arguments);
+        })
+        // child.on('exit', function() {
+        //     events.onError.apply(this, arguments);
+        // })
+    }
     events.onExit && child.on('close', function() {
         events.onExit.apply(this, arguments);
     })
@@ -35,14 +38,15 @@ function run(exe, cmds, opts, events) {
 }
 
 var g_tasks = {};
-function task_killAll(){
-    for(let id in g_tasks){
+
+function task_killAll() {
+    for (let id in g_tasks) {
         g_tasks[id].kill();
     }
     g_tasks = {};
 }
 
-function task_add(key, task){
+function task_add(key, task) {
     g_tasks[key] = task;
 }
 
@@ -60,7 +64,7 @@ function ffmpeg1(cmd, opts, events) {
             if (r != '') events.onTimeupdate(r);
         }
     }
-    var child = run(__dirname + `/bin/ffmpeg.exe`, cmd, opts, Object.assign(events, opts1))
+    var child = run(__dirname + `/bin/ffmpeg.exe`, cmd, opts.spawn, Object.assign(events, opts1))
     task_add(new Date().getTime(), child);
 }
 
@@ -69,7 +73,7 @@ function ffprobe(file, opts = {}, events) {
         var s = '';
         var child = run(__dirname + `/bin/ffprobe.exe`, `-v quiet -show_streams -show_format -print_format json "${file}"`, opts, Object.assign(events || {}, {
             onOutput: function(msg) {
-                s += msg.toString();
+                s += msg;
             },
             onExit: () => {
                 reslove(JSON.parse(s));
@@ -81,7 +85,7 @@ function ffprobe(file, opts = {}, events) {
 function ytdl_parse(url, opts = {}) {
     return new Promise((reslove, reject) => {
         let cmd = __dirname + `/bin/yt-dlp.exe -j "${url}"`;
-        child_process.exec(cmd, Object.assign(opts, { maxBuffer: 1024 * 3000 , shell: true}), function(err, stdout, stderr) {
+        child_process.exec(cmd, Object.assign(opts, { maxBuffer: 1024 * 3000, shell: true }), function(err, stdout, stderr) {
             if (err) return reject(err)
             reslove(stdout || stderr)
         })
@@ -101,8 +105,9 @@ function toTime(s) {
 class ffmpeg {
     events = {}
     output = ''
-    args = ['-y']
     constructor(input, opts = {}) {
+        this.args = ['-y', ...(opts.args || [])]
+        delete opts.args
         this.setInput(input);
         this.opts = opts;
         return this;
@@ -119,7 +124,7 @@ class ffmpeg {
         this.args = Array.from(new Set([...args, ...this.args]))
         return this;
     }
-    getInput(){
+    getInput() {
         return this.getParam('-i', '');
     }
     setParam(key, val) {
@@ -142,7 +147,7 @@ class ffmpeg {
         let arr = this.args[index].split(' ');
         arr.shift();
         var val = arr.join(' ');
-        if(val.substr(0, 1) == '"' && val.substr(-1) == '"'){
+        if (val.substr(0, 1) == '"' && val.substr(-1) == '"') {
             val = val.substr(1, val.length - 2);
         }
         return val;
@@ -171,10 +176,9 @@ class ffmpeg {
         return args.join(' ')
     }
     async start() {
-        if(this.opts.meta){ // 将保存媒体信息
-           this.meta = await ffprobe(this.getInput());
+        if (this.opts.meta) { // 将保存媒体信息
+            this.meta = await ffprobe(this.getInput());
         }
-
         // .replace(/ /g,"\\\ ");
         let cmd = this.getCmd();
         this.emit('start', cmd);
@@ -202,25 +206,25 @@ class ffmpeg {
         return this;
     }
 
-    kill(){
+    kill() {
         this.process.kill();
     }
 
-    getAvailableCodecs(callback){
-        let r = {V: {}, A: {}};
+    getAvailableCodecs(callback) {
+        let r = { V: {}, A: {} };
         let s = '';
-         ffmpeg1('-encoders', {}, {
+        ffmpeg1('-encoders', {}, {
             onOutput: msg => {
                 s += msg;
             },
             onExit: code => {
-                for(let line of s.split('\n')){
+                for (let line of s.split('\n')) {
                     line = line.trim();
                     let key = line.substr(0, 1);
-                    if(r[key]){
+                    if (r[key]) {
                         let arr = line.replaceAll('  ', ' ').split(' ');
                         let name = arr[1];
-                        if(name == '=') continue;
+                        if (name == '=') continue;
                         let val = '';
                         arr.reverse().some(s1 => {
                             val = s1 + ' ' + val;
@@ -232,65 +236,66 @@ class ffmpeg {
                 callback(r);
             }
         });
-         return this;
+        return this;
     }
 
     screenshots(opts) {
         // TODO 单张的不需要获取时长
         let file = this.getParam('-i').trim('');
         // if(opts.size){
-            
+
         // }
-        ffprobe(file).then(meta => {
-            let duration = meta.format.duration;
-            let video = meta.streams[0];
-            let out = [`-i "${file}"`, '-y',] // -i 必须在最前面
-            if(opts.size){
+        let out = [`-i "${file}"`, '-y', ] // -i 必须在最前面
+        if (this.meta) {
+            let duration = this.meta.format.duration;
+            let video = this.meta.streams[0];
+            if (opts.size) {
                 let size = opts.size.split('x');
                 let r = video.width / video.height;
-                if(size[0] == '?'){
+                if (size[0] == '?') {
                     size[1] = parseInt(size[1]);
                     size[0] = parseInt(r ? size[1] * r : size[1] / r);
-                }else
-                if(size[1] == '?'){
+                } else
+                if (size[1] == '?') {
                     size[0] = parseInt(size[0]);
                     size[1] = parseInt(r ? size[0] / r : size[0] * r);
                 }
                 out.push(`-s ${size[0]}x${size[1]}`)
             }
-
             if (typeof(opts.count) == 'number') { // 生成指定数量
                 let count = parseInt(opts.count); // 会有偏差
                 out = out.concat('-vsync 0', `-vf select="not(mod(n\\,${parseInt(video.nb_frames / count)}))"`);
                 return this
                     .outputOptions(out)
-                    .save(opts.folder +'/'+ opts.filename);
+                    .save(opts.folder + '/' + opts.filename);
             }
+        }
 
-            if (!Array.isArray(opts.timestamps)) {
-                opts.timestamps = [opts.timestamps];
-            }
+        if (!Array.isArray(opts.timestamps)) {
+            opts.timestamps = [opts.timestamps];
+        }
 
-            let cnt = 0;
-            opts.timestamps.forEach((time, i) => {
-                let args = [...out];
-                args.unshift(`-ss ${time}`, '-r 1');
-                args.push('-vframes 1',  opts.folder + '/' + opts.filename.replace('{i}', i));
-                ffmpeg1(args.join(' '), {}, {
-                    onOutput: msg => {
-                        if (msg.indexOf('global headers:') != -1) {
-                            this.emit('progress', ++cnt / opts.timestamps.length);
-                        }
-                    },
-                    onError: err => {
-                        this.emit('error', err);
-                    },
-                    onExit: code => {
-                        this.emit('end', code);
+        let cnt = 0;
+        opts.timestamps.forEach((time, i) => {
+            let args = [...out];
+            // , '-r 1'
+            args.unshift(`-ss ${time}`);
+            // -vframes 1', 
+            args.push(`"${opts.folder}/${opts.filename.replace('{i}', i)}"`);
+            ffmpeg1(args.join(' '), this.opts || {}, {
+                onOutput: msg => {
+                    if (msg.indexOf('global headers:') != -1) {
+                        this.emit('progress', ++cnt / opts.timestamps.length);
                     }
-                });
-            })
-        });
+                },
+                onError: err => {
+                    this.emit('error', err);
+                },
+                onExit: code => {
+                    this.emit('end', code);
+                }
+            });
+        })
 
         return this;
     }
@@ -328,7 +333,7 @@ class ffmpeg {
 //         // filename: 'screenshot{i}.jpg',
 //         size: '160x?'
 //     })
-    // .save('C:/Users/liaoyanjie/Desktop/out.mp4');
+// .save('C:/Users/liaoyanjie/Desktop/out.mp4');
 
 
 
@@ -347,8 +352,9 @@ class ffmpeg {
 // })
 
 module.exports = {
-    ffmpeg: ffmpeg,
-    ffprobe: ffprobe,
-    ytdl_parse: ytdl_parse,
-    task_killAll: task_killAll,
+    ffmpeg,
+    run,
+    ffprobe,
+    ytdl_parse,
+    task_killAll,
 }

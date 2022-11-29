@@ -1,0 +1,117 @@
+# .dropdown-menu {}
+
+#following_list .avatar .badge {
+    bottom: unset
+}
+
+.slider-round {
+    height: 10px;
+}
+
+.slider-round .noUi-connect {
+    background: var(--tblr-primary);
+}
+
+#sidebar_right {
+    overflow-y: hidden;
+}
+
+.slider-round .noUi-handle {
+    height: 18px;
+    width: 18px;
+    top: -5px;
+    right: -9px; /* half the width */
+    border-radius: 9px;
+}
+
+.slider-hide .noUi-tooltip {
+    display: none;
+}
+.slider-hide .noUi-active .noUi-tooltip {
+    display: block;
+}
+
+.noUi-handle:after, .noUi-handle:before {
+    content: unset !important;
+
+}
+
+#account_list .active .avatar {
+    border:  3px solid var(--tblr-warning);
+    scale: 1.25;
+}
+
+group {
+    display: none;
+}
+
+img {
+    user-select: none;
+}
+
+/* 隐藏没激活的tab */
+._content:not(.active){
+    display: none
+}
+
+.avatar {
+    cursor: pointer;
+}
+
+.foll_icon_updateing span {
+    border: 2px solid red;
+    border-style: ridge;
+    scale: 1.2;
+}
+
+.btn-list .btn {
+    padding: 7px;
+}
+
+.sticky-top {
+    z-index: 2;
+}
+
+#account_tabs ul li.nav-item {
+    max-width: 150px;
+}
+
+#account_tabs ul li.nav-item span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+#account_tabs ul li.nav-item:nth-of-type(n+4) span {
+    /* 4个标签后面只显示图标 */
+    display: none;
+}
+
+.ui_btn_active {
+    background-color: var(--tblr-azure);
+   color: var(--tblr-light) !important;
+}
+
+li.dropdown {
+    height: 37px;
+    top: 3px;
+}
+
+/* 修复dropdown高度会溢出 */
+.ui_btn_active .nav-link {
+   color: var(--tblr-light) !important;
+}
+
+#detail_tabs .card-body.h-full {
+    padding: 0;
+}
+
+.theme-dark .nav-link.active{
+    background: unset;
+    border: 1px solid;
+}
+
+
+#dy_tabs .nav-link.active {
+
+}

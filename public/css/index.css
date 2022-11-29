@@ -1,3 +1,30 @@
+.bg-auto {
+    background-color: var(--tblr-active-bg);
+}
+
+.fs-1 {
+    font-size: 1.5rem !important
+}
+
+.fs-2 {
+    font-size: 1.25rem !important
+}
+
+.fs-3 {
+    font-size: 1rem !important
+}
+
+.fs-4 {
+    font-size: .875rem !important
+}
+
+.fs-5 {
+    font-size: .75rem !important
+}
+
+.fs-6 {
+    font-size: .625rem !important
+}
 
 .dropdown-item {
     min-width: unset;
@@ -7,7 +34,7 @@
     background-color: unset !important;
 }
 
-.form-videocheck{
+.form-videocheck {
     position: relative;
 }
 
@@ -15,11 +42,15 @@
     -webkit-app-region: drag;
 }
 
-.form-videocheck .form-videocheck-input {i
-    position: absolute;
+.form-videocheck .form-videocheck-input {
+    i position: absolute;
     left: 4px;
-    top:  4px;
-    z-index:  2;
+    top: 4px;
+    z-index: 2;
+}
+
+.zIndex-top {
+    z-index: 999 !important;
 }
 
 :root {
@@ -27,7 +58,7 @@
 }
 
 main {
-    width:  100%;
+    width: 100%;
     position: fixed;
     overflow-y: hidden;
     top: var(--offset-top) !important;
@@ -44,7 +75,8 @@ main {
     margin-right: 5px;
 }
 
-i,.badge {
+i,
+.badge {
     cursor: pointer !important;
 }
 
@@ -68,10 +100,12 @@ body {
     width: unset !important;
     min-width: unset !important;
 }
+
 .h-unset {
     height: unset !important;
     max-height: unset !important;
 }
+
 .w-max {
     width: 100vw !important;
 }
@@ -176,6 +210,11 @@ body {
     cursor: pointer;
 }
 
+.hideScroll::-webkit-scrollbar {
+    width: 0 !important;
+    height: 0 !important;
+}
+
 .text-nowarp {
     display: block;
     word-break: keep-all;
@@ -231,6 +270,7 @@ body {
     --bd-callout-bg: rgba(var(--bs-info-rgb), .075);
     --bd-callout-border: rgba(var(--bs-info-rgb), .5);
 }
+
 .bd-callout {
     padding: 1.25rem;
     /*margin-top: 1.25rem;*/
@@ -248,4 +288,22 @@ body {
 .bd-callout-danger {
     --bd-callout-bg: rgba(var(--bs-danger-rgb), .075);
     --bd-callout-border: rgba(var(--bs-danger-rgb), .5);
+}
+
+.datagrid {
+    --tblr-datagrid-padding: 1.5rem;
+    --tblr-datagrid-item-width: 15rem;
+    display: grid;
+    grid-gap: var(--tblr-datagrid-padding);
+    grid-template-columns: repeat(auto-fit, minmax(var(--tblr-datagrid-item-width), 1fr))
+}
+
+.datagrid-title {
+    font-size: .625rem;
+    font-weight: var(--tblr-font-weight-bold);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    line-height: 1rem;
+    color: var(--tblr-muted);
+    margin-bottom: .25rem
 }

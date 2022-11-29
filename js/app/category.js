@@ -213,10 +213,12 @@ var g_category = {
                 })
             }
         }
+        console.log(datas)
 
         $('#sidebar_left').addClass('border-end').find('#group_list').html(g_tabler.build_accordion({
             id: 'group',
             datas: datas,
+            header: '{title}',
             default: true,
             parent: false,
             onOpen: e => {

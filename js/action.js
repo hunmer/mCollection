@@ -84,3 +84,7 @@ var g_action = {
 
 g_action.init()
 
+
+function doAction(action, dom, e) {
+    g_action.do(dom, action, e)
+}

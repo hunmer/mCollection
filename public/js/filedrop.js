@@ -5,6 +5,30 @@ var g_fileDrop = {
         window.addEventListener('mousemove', e => {
             g_cache.mouse = e
         })
+        $(document).
+        // 拖拽文件
+        on('dragstart', '[data-file]', function(e) {
+            clearEventBubble(e)
+            g_cache.draging = true; // 全局拖拽事件，只允许外部文件触发filedrop
+            let dom = $(e.currentTarget)
+            let icon = dom.attr('data-icon') || dom.attr('src') || dom.find('img').attr('src')
+            let files = [dom.attr('data-file')]
+            let keys = [dom.attr('data-md5')]
+            for (let target of dom.siblings('.item_selected')) {
+                let { file, md5 } = target.dataset
+                files.push(file)
+                md5 != undefined && keys.push(md5)
+            }
+            g_cache.dragingMD5s = keys
+            setDragingFiles(files, icon)
+        })
+        // 不知道啥原因不会触发,不取消dargstart且不会出现拖拽元素??
+        // on('dragend', '[data-file]', function(e) {
+        //     console.log('end', e)
+        //     g_cache.draging = false;
+        // })
+
+
     },
     register(name, opts) {
         const self = this
@@ -44,30 +68,9 @@ var g_fileDrop = {
             g_cache.draging = false;
         })
 
+        let lastDragTime
+
         $(document).
-        // 拖拽文件
-        on('dragstart', '[data-file]', function(e) {
-            g_cache.draging = true; // 全局拖拽事件，只允许外部文件触发filedrop
-            let dom = $(e.currentTarget)
-            let icon = OR(dom.attr('data-icon'), dom.attr('src'), dom.find('img').attr('src'))
-
-            let files = [dom.attr('data-file')]
-            let keys = [dom.attr('data-md5')]
-            for (let target of dom.siblings('.item_selected')){
-                let {file, md5} = target.dataset
-                files.push(file)
-                md5 != undefined && keys.push(md5)
-            }
-            g_cache.dragingMD5s = keys
-            setDragingFiles(files, icon)
-            clearEventBubble(e)
-        }).
-        // 不知道啥原因不会触发,不取消dargstart且不会出现拖拽元素??
-        // on('dragend', '[data-file]', function(e) {
-        //     console.log(e)
-        //     g_cache.draging = false;
-        // }).
-
         on('dragleave', opts.selector, e => fileDragHover(e)).
         on('dragover', opts.selector, e => fileDragHover(e)).
         on('drop', opts.selector, function(e) {

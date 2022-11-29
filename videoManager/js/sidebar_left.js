@@ -49,7 +49,7 @@ var g_sideL = {
                     height: 100vh;
                 }
                 #sidebar_left.hideSidebar {
-                    margin-left: -var(--offset-left);
+                    margin-left: calc(0px - var(--offset-left));
                 }
                 main[sidebar-left]{
                     padding-left: var(--offset-left);

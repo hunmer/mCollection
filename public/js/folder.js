@@ -96,7 +96,7 @@ var g_folder = {
 
                 case 'folder_delete':
                     // TODO 删除目录时更多选项(删除所有视频)
-                    return confirm('确定要删除目录【' + folder + '】吗？\n删除后素材不会消失', {
+                    return confirm('确定要删除目录【' + self.folder_getName(folder) + '】吗？\n删除后素材不会消失', {
                         title: '删除目录',
                         type: 'danger'
                     }).then(() => {

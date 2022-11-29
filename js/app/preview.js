@@ -27,12 +27,10 @@ var g_preview = {
         find('#video_item_preview').remove()
     },
     getPreviewHtml(d) {
-
         let h = ''
         let file = g_item.item_getVal('file', d)
         let ext = getExtName(file)
-
-        if (['mp3', 'wav', 'ogg'].includes(ext)) {
+        if (['mp3', 'wav', 'ogg', 'm4a'].includes(ext)) {
             h = `<video src="${file}" poster="${g_item.item_getVal('wave', d)}" class="w-full" autoplay loop {attr}></video>`
         } else
         if (['mp4'].includes(ext)) {
