@@ -9,7 +9,7 @@ function walkSync(currentDirPath, callback) {
         if (stat.isFile()) {
             callback(filePath, stat);
         } else if (stat.isDirectory()) {
-            if (['node_modules', 'build', 'download', 'downloads', 'scripts', 'cache', 'test', 'extensions', '.git', 'database', 'server\\node_modules', 'dou\\downloads'].indexOf(filePath) == -1) {
+            if (['node_modules', 'build', 'download', 'downloads', 'scripts', 'cache', 'test', 'extensions', '.git', 'database', 'server\\node_modules', 'dou\\downloads', 'videoPlayer\\downloads'].indexOf(filePath) == -1) {
                 walkSync(filePath, callback);
             }
         }
