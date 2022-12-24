@@ -62,7 +62,7 @@ var g_modal = {
         `,
         },
 
-         fullscreen: {
+        fullscreen: {
             html: `
             <div class="modal" tabindex="-1">
               <div class="modal-dialog modal-fullscreen" role="document">
@@ -110,7 +110,7 @@ var g_modal = {
             });
         }
 
-        window.confirm = (text, opts= {}) => {
+        window.confirm = (text, opts = {}) => {
             return new Promise((reslove, reject) => {
                 let modal = self.modal_build(Object.assign({
                     title: '询问',
@@ -135,7 +135,7 @@ var g_modal = {
             });
         }
 
-        window.prompt = (text, opts= {}) => {
+        window.prompt = (text, opts = {}) => {
             return new Promise((reslove, reject) => {
 
                 let modal = self.modal_build(Object.assign({
@@ -187,36 +187,41 @@ var g_modal = {
             id: new Date().getTime(),
             buttons: [],
             static: true,
+            style: {},
             width: '',
             show: true,
             hotkey: true,
             btn_close: true, // 点击按钮后是否自动关闭modal
-            onBtnClick: btn => {
-
-            },
+            onBtnClick: btn => {},
             onShow: function(e) {},
             onHide: function(e) {},
             onClose: function(e) {},
+            getModal() {
+                return $('#modal_' + this.id)
+            }
         }, opts || {})
 
-        if(Array.isArray(opts.extraButtons)){
+        if (Array.isArray(opts.extraButtons)) {
             opts.buttons.unshift(...opts.extraButtons)
         }
         let style = Object.assign({}, this.style_get(opts.type))
+
+        // 底部footer
+        let btns = '';
+        for (let btn of opts.buttons) {
+            btns += `<button type="button" ${btn.id ? `id="btn_${btn.id}"` : ''} ${btn.action ? `data-action="${btn.action}"` : ''} class="modal_btn btn mx-auto ${btn.class}" ${btn.attr || ''}>${btn.text}</button>`
+        }
+        opts.footer = opts.footer.replace('{btn}', btns)
+
         let html = style.html
             .replace('{title}', opts.title)
             .replace('{html}', opts.html)
-            .replace('{footer}', (() => {
-                let btns = '';
-                for (let btn of opts.buttons) {
-                    btns += `<button type="button" ${btn.id ? `id="btn_${btn.id}"` : ''} ${btn.action ? `data-action="${btn.action}"` : ''} class="modal_btn btn mx-auto ${btn.class}" ${btn.attr || ''}>${btn.text}</button>`
-                }
-                return opts.footer.replace('{btn}', btns)
-            })())
+            .replace('{footer}', opts.footer)
 
-        let modal = $('#modal_' + opts.id)
+        let id = 'modal_' + opts.id
+        let modal = $('#' + id)
         modal.length && modal.remove();
-        modal = $(html).attr('id', 'modal_' + opts.id).css({
+        modal = $(html).attr('id', id).css({
             backgroundColor: 'rgba(0, 0, 0, .4)',
         }).appendTo('body')
 
@@ -227,8 +232,10 @@ var g_modal = {
             width: opts.width,
             maxWidth: 'unset'
         })
+        dialog.css(opts.style)
         opts.scrollable && dialog.addClass('modal-dialog-scrollable')
 
+        let footer = modal.find('.modal-footer').toggleClass('hide', opts.footer == '')
         // 绑定按钮事件
         let def_btn
         modal.find('.modal_btn').each((i, btn) => {
@@ -250,15 +257,15 @@ var g_modal = {
         if (opts.hotkey) {
             // TODO 全局热键
             modal.on('keyup', function(e) {
-                if ($('input:focus,textarea:focus').length == 0) {
+                // if ($('input:focus,textarea:focus').length == 0) {
                     let key = e.originalEvent.key
-                    if (key == 'Enter') {
-                        def_btn && def_btn.click()
-                    } else
+                    // if (key == 'Enter') { // 有冲突
+                    //     def_btn && def_btn.click()
+                    // } else
                     if (key == 'Escape') {
                         modal.method('hide', e)
                     }
-                }
+                // }
             })
         }
 
@@ -274,15 +281,18 @@ var g_modal = {
         modal.method = function(method, params) {
             switch (method) {
                 case 'show':
-                    if (opts.onShow(params) === false) return
+                    if (opts.onShow(modal, params) === false) return
+                    g_plugin.callEvent('modal_show', { modal, params })
                     $('html').addClass('modaled')
                     return modal.show()
                 case 'hide':
-                    if (opts.onHide(params) === false) return
+                    if (opts.onHide(modal, params) === false) return
+                    g_plugin.callEvent('modal_hide', { modal, params })
                     $('html').removeClass('modaled')
                     return modal.hide()
-               case 'close':
-                    if (opts.onClose(params) === false) return
+                case 'close':
+                    if (opts.onClose(modal, params) === false) return
+                    g_plugin.callEvent('modal_close', { modal, params })
                     return modal.remove()
             }
         }
@@ -300,6 +310,10 @@ var g_modal = {
     },
     remove: function(id) {
         this.modal_get(id).remove()
+    },
+    isShowing(id){
+        let modal = this.modal_get(id)
+        return modal.length && modal.css('display') != 'none'
     }
 }
 

@@ -23,6 +23,13 @@ g_db.init({
             action: 'db_openEagle',
         },
     },
+
+    getOption(opts){
+        return {
+            readonly: opts.file.startsWith('Y')
+        }
+    },
+
     init() {
         g_action.registerAction({
             db_openEagle: () => {
@@ -92,7 +99,8 @@ g_db.init({
             logText: '<p><b class="text-success">√ 成功解析:</b>\n<b>%%s%%</b></p>',
             onProgress: i => {
                 if (i >= 100) {
-                    g_modal.modal_get('progress_import').find('#btn_ok').html('开始导入') // TODO 导入选项?
+                    let btn = g_modal.modal_get('progress_import').find('#btn_ok').html('开始导入') // TODO 导入选项?
+                    if($('#checkbox_import_auto').prop('checked')) btn[0].click()
                 }
             },
             onClose: function() {
@@ -103,6 +111,13 @@ g_db.init({
                 id: 'progress_import',
                 title: '解析eagle素材中...',
                 btn_ok: '取消',
+                footer: `
+                     <label class="form-check me-2">
+                        <input id="checkbox_import_auto" type="checkbox" class="form-check-input"/>
+                        <span class="form-check-label">自动导入</span>
+                     </label>
+                    {btn}
+                `,
                 scrollable: true,
             }).then(() => {
                 progress.destroy()
@@ -128,12 +143,11 @@ g_db.init({
                     json = JSON.parse(nodejs.files.read(json))
                     if (!json.isDeleted) {
                         let data = {
-                            // format frame
                             width: json.width,
                             height: json.height,
                         }
 
-                        if (json.palettes) data.colors = json.palettes.map(v => colorToHex(v.color))
+                        if (json.palettes) data.colors = json.palettes.map(v => v.color)
                         if (json.duration) data.duration = json.duration
                         if (json.comments) data.comments = (json.comments || []).map(v => {
                             return {
@@ -149,10 +163,10 @@ g_db.init({
                         // md5 = json.id
                         r[md5] = {
                             folders: json.folders,
-                            file: file,
+                            file,
                             tags: json.tags,
                             link: json.url,
-                            md5: md5,
+                            md5,
                             title: json.name,
                             desc: json.annotation,
                             birthtime: json.btime,

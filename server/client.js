@@ -1,6 +1,7 @@
 var g_client = {
     url: 'ws://127.0.0.1:41594',
     init() {
+        // g_cache.debug = true
         this.recon()
         loadRes([_dataPath + '\\resources\\app\\server\\tasker.js'])
     },
@@ -11,47 +12,25 @@ var g_client = {
         //     .addClass('bg-' + (b ? 'success' : 'danger'))
         //     .find('b').html(b ? '连接成功' : '连接失败');
     },
+    reloadServer(){
+        if(this.isConnected()) this.send('exit')
+        // TODO SOCKET回调函数
+    },
     tryStartServer() {
         fetch('http://127.0.0.1:41597').then(response => response.json()).then(data => {
             if (data.status != 'success') {
                 this.startSever()
             } else {
-                // fetch("http://localhost:41597/api/item/addFromPaths", {
-                //         method: 'POST',
-                //         headers: {
-                //             'Content-Type': 'application/json'
-                //             // 'Content-Type': 'application/x-www-form-urlencoded',
-                //         },
-                //         body: JSON.stringify({
-                //             items: [{
-                //                 path: 'I:\\software\\videoManager\\resources\\app\\cuts\\1666930183179.mp4',
-                //                 name: '1666930183179.mp4',
-                //                 tags: ['tag1', 'tag2'],
-                //             }, {
-                //                 path: 'I:\\software\\videoManager\\resources\\app\\cuts\\1666929924762.mp4',
-                //                 name: '1666929924762.mp4',
-                //                 tags: ['tag1', 'tag2'],
-                //             }, {
-                //                 path: 'I:\\software\\videoManager\\resources\\app\\cuts\\1666925184266.mp4',
-                //                 name: '1666925184266.mp4',
-                //                 tags: ['tag1', 'tag2'],
-                //             }]
-                //         }),
-                //     })
-                //     .then(response => response.json())
-                //     .then(result => {
-                //         console.log(result)
-                //     })
-                //     .catch(error => console.log('导入失败,请确保eagle在后台运行!'));
+               
 
             }
-            // setTimeout(() => process.kill(-child.pid), 3000)
         }).catch(error => {
             this.startSever()
         });
     },
     startSever() {
         let _path = __dirname + '\\server\\'
+        // if(this.child) require('tree-kill')(this.child.pid, 'SIGKILL', () => console.log('已退出服务...'))
         // 随着刷新而刷新
         this.child = nodejs.cli.run(_path + 'node.exe', _path + 'server.js', {
             // detached: true
@@ -97,10 +76,9 @@ var g_client = {
             self.sendList = []
 
             // 发送文件夹同步事务
-            // self.send('login');
-
-            // self.ping && clearInterval(self.ping);
-            // self.ping = setInterval(() => socket.send('ping'), 1000 * 30);
+            self.send('connected', {type: 'client'});
+            self.ping && clearInterval(self.ping);
+            self.ping = setInterval(() => self.send('ping'), 1000 * 30);
         }
 
         socket.onmessage = e => {
@@ -129,7 +107,6 @@ var g_client = {
         for (var alisa of name) this.revices[alisa] = callback;
         return this
     },
-
     // once(type, data, callback){
     //     this.send(type, data)
     //     this.registerRevice()

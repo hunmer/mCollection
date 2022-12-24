@@ -3,17 +3,6 @@ g_sizeable.init({
     getData: (name, def) => local_readJson(name, def || {}),
 })
 
-g_sizeable.register('detailTabs', {
-    selector: '#detail_tabs',
-    memory: true,
-    allow: ['left'],
-    width_min: 300,
-    width_max: 800,
-    style: {
-    	backgroundColor: 'unset',
-    },
-})
-
 g_sizeable.register('extraTabs', {
     selector: '#extra_tabs',
     memory: true,

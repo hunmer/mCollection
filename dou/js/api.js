@@ -2,37 +2,89 @@ var g_api = {
 
     // https://www.52pojie.cn/thread-1266439-1-1.html
     douyin_fetchID(id, callback) {
-        fetch('https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids=' + id).then(d => {
-            d.json().then(function(data) {
-                callback(data);
+        netRequest('https://www.douyin.com/video/'+id).then(resp => {
+            resp.text().then(body => {
+                try {
+                    let text = cutString(body, '<script id="RENDER_DATA" type="application/json">', '</script>')
+                    let json = JSON.parse(decodeURIComponent(text, true))
+                    callback({item_list: [json['41'].aweme.detail]})
+                } catch (err) {
+                    // 滑动验证码
+                    console.error(err)
+                }
             })
         })
     },
 
-    getVideoDetail(item) {
-        return {
+    getParmams(args = {}) {
+        return Object.entries(Object.assign({
+            aid: 6383,
+            channel: 'channel_pc_web',
+            pc_client_type: 1,
+            version_code: 170400,
+            version_name: '17.4.0',
+            cookie_enabled: true,
+            screen_width: 1920,
+            screen_height: 1080,
+            browser_language: 'zh-CN',
+            browser_platform: 'Win32',
+            browser_name: 'Edge',
+            browser_online: true,
+            engine_version: '108.0.0.0',
+            os_name: 'Windows',
+            os_version: 10,
+            cpu_core_num: 8,
+            device_memory: 8,
+            platform: 'PC',
+            downlink: 10,
+            effective_type: '4g',
+        }, args)).map(([k, v]) => k + '=' + v).join('&')
+    },
+
+    getComment(opts, callback) {
+        netRequest(`https://www.douyin.com/aweme/v1/web/comment/list/?` + this.getParmams(opts)).then(d => {
+            d.json().then(data => {
+                callback(data)
+            })
+        })
+    },
+
+    getVideoDetail(item, user = false) {
+        let {video} = item
+        let r = {
             time: this.video_getTime(item),
-            comment: item.statistics.comment_count,
-            like: item.statistics.digg_count,
-            share: item.statistics.share_count,
+            comment: item.stats ? item.stats.commentCount : item.statistics.comment_count,
+            like: item.stats ? item.stats.diggCount : item.statistics.digg_count,
+            comment: item.stats ? item.stats.shareCount : item.statistics.share_count,
             desc: item.desc,
-            aid: item.aweme_id,
-            vid: item.video.vid,
+            aid: item.awemeId || item.aweme_id,
+            // vid: video.vid || '',
             shop: item.aweme_anchor_info && item.aweme_anchor_info.title_tag == '购物' ? item.aweme_anchor_info.title_tag : undefined,
-            duration: item.video.duration,
-            cover: item.video.cover.url_list[0],
-            cover: item.video.cover.url_list[0],
-            poster: item.video.dynamic_cover ? item.video.dynamic_cover.url_list[0] : item.video.origin_cover.url_list[0],
-            // video: item.video.play_addr.url_list[2], // 第3,4链接不会过期
-            video: "https://aweme.snssdk.com/aweme/v1/play/?video_id=" + item.video.play_addr.uri, // + "&ratio=720p&line=0"
+            duration: video.duration,
+            cover: Array.isArray(video.cover) ? video.cover.url_list[0] : video.cover,
+            poster: video.originCover || (Array.isArray(video.dynamic_cover) ? video.dynamic_cover.url_list[0] : video.dynamicCover),
+            // video: video.play_addr.url_list[2], // 第3,4链接不会过期
+            video: video.playApi || "https://aweme.snssdk.com/aweme/v1/play/?video_id=" + video.play_addr.uri, // + "&ratio=720p&line=0"
+        }
+        if (user) r.user = this.getUserDetail(item)
+        return r
+    },
+
+    getUserDetail(item){
+        let author = item.authorInfo || item.author
+        return {
+            uid: author.secUid || author.sec_uid,
+            name: author.nickname,
+            icon: author.avatarUri || author.avatar_thumb.url_list[0]
         }
     },
 
     video_getTime(item) {
         let u = url => typeof(url) == 'string' && url.split('_').at(-1);
-        return parseInt([u(item.video.cover.uri), item.video.dynamic_cover ? u(item.video.dynamic_cover.uri) : 0, u(item.video.origin_cover.uri)].find(t => {
+        let t = item.createTime || [u(item.video.cover.uri), item.video.dynamic_cover ? u(item.video.dynamic_cover.uri) : 0, u(item.video.origin_cover.uri)].find(t => {
             return !isNaN(parseInt(t));
-        }) + '000')
+        })
+        return parseInt(t + '000')
     },
 
     // 用户所有视频
@@ -43,17 +95,21 @@ var g_api = {
                 count: 10,
                 cursor: 0
             }, opts)
-            try {
-                fetch(`https://www.iesdouyin.com/web/api/v2/aweme/post/?sec_uid=${opts.uid}&count=${opts.count}&max_cursor=${opts.cursor }&min_cursor=0&aid=1128&_signature=HunHKQABfpAtN81GL5ujHx7pvd`).then(d => {
-                    d.json().then(function(data) {
-                        callback(data);
-                        reslove(true)
-                    })
+            netRequest(`https://www.douyin.com/aweme/v1/web/aweme/post/?` + this.getParmams({
+                sec_user_id: opts.uid,
+                count: opts.count,
+                max_cursor: opts.cursor
+            })).then(d => {
+                d.json().then(data => {
+                    let ok = true
+                    if (!data) {
+                        data = { aweme_list: [] }
+                        ok = false
+                    }
+                    callback(data);
+                    reslove(ok)
                 })
-            } catch (e) {
-                callback({ aweme_list: [] });
-                reslove(false)
-            }
+            })
         })
     },
 
@@ -72,6 +128,16 @@ var g_api = {
             r.list = aweme_list.map(item => this.getVideoDetail(item))
             callback(r)
         })
+    },
+
+    douyin_videoDetail(vid) {
+        return new Promise((reslove, reject) => this.douyin_fetchID(vid, data => {
+            if (data.item_list && data.item_list.length) {
+                let detail = data.item_list[0]
+                reslove(Object.assign(this.getVideoDetail(detail), {user: this.getUserDetail(detail)}))
+            }
+            reject()
+        }))
     },
 
     // 获取用户信息
@@ -151,5 +217,48 @@ var g_api = {
         })
     }
 
+
+}
+
+function netRequest(opts) {
+    return new Promise(reslove => {
+        if (typeof(opts) != 'object') opts = { url: opts }
+        const req = nodejs.net.request(Object.assign({
+            method: 'GET',
+            session: nodejs.remote.session.defaultSession,
+            useSessionCookies: true,
+            // headers: {
+            //     'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+            // }
+        }, opts))
+
+        let raw = ''
+        let cb = () => new Promise(ret => {
+            req.on('abort', () => {
+                ret(false)
+            })
+            req.on('response', (response) => {
+                if (response.statusCode == 200) {
+                    let timeout = setTimeout(() => req.abort(), 5000)
+                    response.on('data', data => raw += data.toString())
+                    response.on('end', () => {
+                        clearTimeout(timeout)
+                        ret(raw)
+                    })
+                } else {
+                    ret(false)
+                }
+            })
+            req.end()
+        })
+        reslove({
+            text() {
+                return new Promise(reslove => cb().then(raw => reslove(raw)))
+            },
+            json() {
+                return new Promise(reslove => cb().then(raw => reslove(JSON.parse(raw))))
+            }
+        })
+    })
 
 }

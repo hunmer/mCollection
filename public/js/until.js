@@ -7,8 +7,28 @@ var g_cache = {
     folderPreset: {}, // 创建文件夹缓存
 }
 
+function toURL(url){
+    if(url.startsWith('//')) url = 'https:'+url
+    return url
+}
+
 function debug(...args) {
     if (g_cache.debug) console.log(...args)
+}
+
+function isObjEqual(a, b) {
+    var aProps = Object.getOwnPropertyNames(a);
+    var bProps = Object.getOwnPropertyNames(b);
+    if (aProps.length != bProps.length) {
+        return false;
+    }
+    for (var i = 0; i < aProps.length; i++) {
+        var propName = aProps[i];
+        if (a[propName] !== b[propName]) {
+            return false;
+        }
+    }
+    return true;
 }
 
 function getObjVals(obj, keys) {
@@ -31,6 +51,7 @@ function setCssVar(k, v) {
     document.documentElement.style
         .setProperty(k, v);
 }
+
 
 function getCssVar(k) {
     return getComputedStyle(document.documentElement)
@@ -72,12 +93,15 @@ function arr_join_range(args, join, start, end) {
 
 function replaceAll_once(str, search, replace, start = 0) {
     if (typeof(str) != 'string') return ''
+    let cnt = 0
     while (true) {
         var i = str.indexOf(search, start);
         if (i == -1) break;
         start = i + search.length;
-        str = str.substr(0, i) + replace + str.substr(start, str.length - start);
-        start += replace.length - search.length;
+
+        let rep = typeof(replace) == 'function' ? replace(cnt++) : replace
+        str = str.substr(0, i) + rep + str.substr(start, str.length - start);
+        start += rep.length - search.length;
     }
     return str;
 }
@@ -296,6 +320,9 @@ function getExtName(s) {
     return popString(s, '.')
 }
 
+function getNumber(s) {
+    return s.replace(/[^0-9]/ig, '')
+}
 
 function getFilePath(s) {
     console.log(s, getFileName(s))
@@ -315,13 +342,11 @@ function getFileName(s, ext) {
 
 function getImgBase64(video, width, height) {
     return new Promise(function(resolve, reject) {
-        var canvas = document.createElement("canvas");
-        canvas.width = video.width();
-        canvas.height = video.height();
-        video[0].setAttribute('crossOrigin', 'anonymous')
-        canvas.getContext("2d").drawImage(video[0], 0, 0, width, height); //绘制canvas
-        dataURL = canvas.toDataURL('image/jpeg'); //转换为base64
-        resolve(dataURL);
+        let canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth;
+        canvas.height =  video.videoHeight;
+        canvas.getContext("2d").drawImage(video, 0, 0);
+        canvas.toBlob(e => resolve(URL.createObjectURL(e)))
     });
 }
 
@@ -437,6 +462,10 @@ function copyText(text, input) {
         document.execCommand('copy');
     }
     remove && input.remove();
+}
+
+function toArr(arr){
+    return Array.isArray(arr) ? arr : [arr]
 }
 
 function showCopy(s) {
@@ -623,11 +652,28 @@ function getParentAttr(dom, selector) {
     return getParent(dom, selector).attr(selector)
 }
 
-function getParent(dom, selector) {
+function getParentData(dom, selector) {
+    dom = $(dom)
+    for (let par of dom.parents()) {
+        let v = $(par).data(selector)
+        if (v != undefined) return v
+    }
+}
+
+
+function getParent(dom, selector, method = 'parents') {
     dom = $(dom)
     let v = dom.attr(selector)
     if (v != undefined) return dom
-    return dom.parents('[' + selector + ']')
+    return dom[method]('[' + selector + ']')
+}
+
+function getChild(dom, selector) {
+   return getParent(dom, selector, 'find')
+}
+
+function getChildAttr(dom, selector) {
+    return getChild(dom, selector).attr(selector)
 }
 
 function set(dom, selector) {
@@ -637,14 +683,6 @@ function set(dom, selector) {
     return dom.parents('[' + selector + ']').attr(selector)
 }
 
-
-function getParentData(dom, selector) {
-    dom = $(dom)
-    for (let par of dom.parents()) {
-        let v = $(par).data(selector)
-        if (v != undefined) return v
-    }
-}
 
 function getPrefixedEle(search, selector = '[data-action]', attr = 'action') {
     return $(selector).filter((i, dom) => (dom.dataset[attr] || '').startsWith(search))
@@ -721,6 +759,10 @@ function isScroll(el) {
     };
 }
 
+function scrollY(ele, scrollTop = 0) {
+    if (scrollTop == -1) scrollTop = ele.prop('scrollHeight')
+    ele.animate({ scrollTop }, 500);
+}
 
 function cutString(s_text, s_start, s_end, i_start = 0, fill = false) {
     i_start = s_text.indexOf(s_start, i_start);

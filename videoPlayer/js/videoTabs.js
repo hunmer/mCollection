@@ -15,8 +15,8 @@ var g_videoTabs = {
                 }, e => {
                     dom.addClass('hide')
                 }, e => {
-                   dom.removeClass('btn-loading')
-                   console.error(e)
+                    dom.removeClass('btn-loading')
+                    console.error(e)
                 })
             }
         })
@@ -55,27 +55,23 @@ var g_videoTabs = {
         //     value: 'https://rongxingvr11.rx9696mv.com:8866/cz8l8TxArUUqg47LbCTIakZ2ALNeMq11ApJQKhMiy0mCaJA5YX2Ld9ViBJLNMnE_DS_mcfHA7TMn6I5hg2Mr6Q/RongXingVR.m3u8',
         //     title: '文件1',
         // })
-        $(document).
-        on('mousewheel', 'video', function(e) {
-            if (!$('input:focus').length) {
-                e = e.originalEvent
-                let key = g_hotkey.getInputCode(e, 'key')
-                if (key == '') return;
-                let video = g_player.getPlayer().video
-                let duration = video.duration
-                if (!isNaN(duration)) {
-                    let add = 1 // eval(opts[key]) || 
-                    if (add < 1) add = 1;
-                    video.currentTime += e.deltaY > 0 ? 0 - add : add;
-                    clearEventBubble(e);
-                }
-            }
-        })
+
+    },
+
+    // 根据文件关闭tab
+    closeByFile(file) {
+        let tab = this.tabs.tab_findTab(file)
+        if (tab) {
+            this.tabs.tab_remove(tab)
+        }
     },
 
     // 获取tab属性
     getTabValue(key, tab) {
-        return g_videoTabs.tabs.tab_getValue(tab)[key]
+        let d = g_videoTabs.tabs.tab_getValue(tab)
+        if(d != undefined){
+            return d[key]
+        }
     },
 
 

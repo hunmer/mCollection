@@ -15,7 +15,6 @@ var g_form = {
                 })
             },
             form_image(dom) {
-                console.log(dom.src)
                 g_form.confirm('form_image', {
                     elements: {
                         src: {
@@ -161,7 +160,7 @@ var g_form = {
             case 'select':
                 return `
                     <label class="form-label">{title}</label>
-                    <select id="{id}" class="form-select" placeholder="{placeholder}">
+                    <select id="{id}" class="form-select" placeholder="{placeholder}" {props}>
                     ${(() => {
                         let h = ''
                         let vals = Object.values(d.list)
@@ -206,6 +205,7 @@ var g_form = {
             .replaceAll('{id}', name)
             .replaceAll('{title}', item.title || '')
             .replaceAll('{rows}', item.rows || 3)
+            .replaceAll('{props}', item.props || '')
             .replaceAll('{required}', item.required ? 'required' : '')
             .replaceAll('{placeholder}', item.placeHolder || '') + '</div>'
     },
@@ -216,8 +216,6 @@ var g_form = {
         let div = this.getContent(name)
         for(let [k, v] of Object.entries(d.elements)){
             if(v.type == 'date'){
-                console.log(this.getElement(name, k).find('.datepicker')[0])
-
                 let opts = Object.assign({
                     element: this.getElement(name, k).find('.datepicker')[0],
                     lang: 'zh-CN',
@@ -232,7 +230,6 @@ var g_form = {
                 picker.on('select', date => {
                     console.log(date, picker)
                 });
-                console.log(picker)
             }
         }
     },
@@ -250,19 +247,20 @@ var g_form = {
     },
 
     // 简便写法
-    confirm1(opts) {
-        g_form.confirm(opts.id, {
+    confirm1(opts, modal_opts = {}) {
+        let id = opts.id
+        this.confirm(id, {
             elements: opts.elements,
-        }, {
-            id: opts.id,
+        }, Object.assign({
+            id,
             title: opts.title || '',
             btn_ok: opts.btn_ok || '确定',
             onBtnClick: (btn, modal) => {
                 if (btn.id == 'btn_ok') {
-                    if (opts.callback({ vals: g_form.getVals('db_edit'), changes: g_form.getChanges('db_edit') }) === false) return false
+                    if (opts.callback({ vals: this.getVals(id), changes: this.getChanges(id) }) === false) return false
                 }
             }
-        })
+        }, modal_opts))
     },
 
     // 返回默认值变动过的列表

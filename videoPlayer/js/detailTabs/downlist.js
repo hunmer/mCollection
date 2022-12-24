@@ -16,6 +16,7 @@ g_detailTabs.register('downlist', {
                     <button data-action="download_clear_completed" class="btn btn-yellow" title="清空已下载"><i class="ti fs-2  ti-refresh"></i></button>
                     <button data-action="download_path" class="btn btn-cyan" title="当前下载目录"><i class="ti fs-2 ti-folder"></i></button>
                     <button data-action="download_settings" class="btn" title="当前下载目录"><i class="ti fs-2 ti-settings"></i></button>
+                    <button data-action="download_checklist" class="btn" title="检查任务"><i class="ti fs-2 ti-check"></i></button>
                 </div>
                 <div class="col">
                     <select class="form-select">

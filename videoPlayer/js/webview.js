@@ -1,49 +1,119 @@
-var g_webview = {
+const { getCurrentWindow, getCurrentWebContents, shell, Menu } = require('@electron/remote');
+const { contextBridge, ipcRenderer } = require('electron')
 
-    init() {
-        const self = this
-        g_action.registerAction({
-            webview_show: dom => self.webview_load()
-        })
-    },
+contextBridge.exposeInMainWorld('electron', {
+    send
+})
 
-    webview_load(url, opts) {
-        let path = nodejs.dir + '\\webview\\'
-        if (!this.win) {
-            let win = this.win = new nodejs.remote.BrowserWindow({
-                width: 1168,
-                height: 788,
-                webPreferences: {
-                    spellcheck: false,
-                    webSecurity: false,
-                    nodeIntegration: true,
-                    webviewTag: true,
-                    contextIsolation: false,
-                    preload: path + 'preload.js',
-                    partition: "persist:webview",
-                }
-            })
-            win.on('closed', e => {
-                delete this.win
-            })
+const _app = getCurrentWindow();
+const _webContent = getCurrentWebContents();
 
-            win.webContents.on('dom-ready', () => {
-                win.webContents.on('ipc-message', (e, t, {type, msg}) => {
-                    if(t == 'method'){ // ipc_send()
-                        console.log(msg)
-                        switch(type){
-                            case 'parseURL':
-                                return g_episode.playlist_parseURL(msg.url)
-                        }
-                    }
-                });
-            });
+ipcRenderer.on('msg', (event, arg) => {
+    doAction(arg);
+});
 
+ipcRenderer.on('close', (event, arg) => {
+    _webContent.destroy() // 好像只会触发destoryed事件，其他没啥卵用
+});
 
-            // win.webContents.openDevTools()
-        }
-        this.win.loadFile(path + 'index.html', { userAgent: 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5060.134 Safari/537.36 Edg/103.0.1264.71' })
+function doAction(arg) {
+    switch (arg.type) {
+        case 'home':
+            return window.scrollTo(0, 0);
+        case 'end':
+            return window.scrollTo(0, document.body.scrollHeight);
+        case 'forward':
+            return _webContent.canGoForward() && _webContent.goForward();
+        case 'back':
+            return _webContent.canGoBack() && _webContent.goBack();
+        case 'toggleFullscreen':
+            return toggleFullScreen()
+
+        default:
+            return send(arg.type)
     }
 }
 
-g_webview.init()
+
+window.addEventListener('DOMContentLoaded', function(e) {
+    let addZoom = i => {
+        _webContent.setZoomFactor(i + _webContent.getZoomFactor())
+    }
+    window.addEventListener('wheel', (ev) => {
+        if (ev.ctrlKey) {
+            addZoom(ev.deltaY > 0 ? -0.1 : 0.1)
+        }
+    })
+    window.addEventListener('keydown', (ev) => {
+        let key = ev.key.toLowerCase()
+        switch (key) {
+            case 'arrowup':
+                return ev.altKey && ev.ctrlKey && ipc_send('prevSite');
+            case 'arrowdown':
+                return ev.altKey && ev.ctrlKey && ipc_send('nextSite');
+            case 'w':
+                return ev.ctrlKey && ipc_send('closeTab');
+            case 'f1':
+                return ipc_send('markURL')
+            case 'f11':
+                return ipc_send('toggleFullscreen');
+            case 'browserback':
+                return ipc_send('back');
+            case 'arrowleft':
+                return ev.shiftKey && !isInputFocused() && ipc_send('back');
+            case 'browserforward':
+                return ipc_send('forward');
+            case 'arrowright':
+                return ev.shiftKey && !isInputFocused() && ipc_send('forward');
+            case 'f12':
+                return _webContent.toggleDevTools()
+            case 'f5':
+                return location.reload();
+        }
+    })
+});
+
+function send(channel, args) {
+    ipcRenderer.sendToHost(channel, args)
+}
+
+function ipc_send(type, data) {
+    data = { data: data };
+    data = Object.assign({
+        type: type
+    }, typeof(data) == 'object' ? data : { msg: data });
+    doAction(data);
+    //ipcRenderer.sendSync('msg',data); 
+}
+
+function isInputFocused() {
+    return document.activeElement.nodeName != 'BODY'
+}
+
+function toggleFullScreen() {
+    if (!document.fullscreenElement && // alternative standard method
+        !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) { // current working methods
+        if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen();
+        } else if (document.documentElement.msRequestFullscreen) {
+            document.documentElement.msRequestFullscreen();
+        } else if (document.documentElement.mozRequestFullScreen) {
+            document.documentElement.mozRequestFullScreen();
+        } else if (document.documentElement.webkitRequestFullscreen) {
+            document.documentElement.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+        }
+        $(window).resize();
+        return true;
+    }
+    if (document.exitFullscreen) {
+        document.exitFullscreen();
+    } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+    } else if (document.mozCancelFullScreen) {
+        document.mozCancelFullScreen();
+    } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+    }
+    $(window).resize();
+    return false;
+}

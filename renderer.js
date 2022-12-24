@@ -1,13 +1,21 @@
 const { app, ipcRenderer, clipboard, shell } = require('electron');
-const remote =  require('@electron/remote');
-const { getCurrentWindow, getCurrentWebContents, webContents,session } = remote
+const remote = require('@electron/remote');
+const { getCurrentWindow, getCurrentWebContents, webContents, session, globalShortcut, Menu, Tray } = remote
 const files = require('./file.js')
-const fs = require('fs')
+const fs = require('fs-extra')
 const path = require('path')
 const request = require('request')
-
+const _app = getCurrentWindow()
 const _webContent = getCurrentWebContents()
 
+globalShortcut.unregisterAll()
+const _shortcut = 'CommandOrControl+Alt+X'
+const ret = globalShortcut.register(_shortcut, () => {
+    ipc_send('toggleShow')
+})
+if (!ret) {
+    console.log('registration failed')
+}
 function downloadFile(opts) {
     var received_bytes = 0;
     var total_bytes = 0;
@@ -16,7 +24,7 @@ function downloadFile(opts) {
         method: 'GET',
         url: opts.url,
         timeout: 15000,
-        proxy: 'http://127.0.0.1:1080',
+        proxy: 'http://127.0.0.1:4780',
     }
     var req = request(opt);
     var fileBuff = [];
@@ -94,7 +102,7 @@ ipcRenderer.on('exit', (event, args) => {
     // g_downloader.aria2c.exit()
     fetch('http://127.0.0.1:41597/exit')
     setTimeout(() => {
-       send('exit');
+        send('exit');
     }, 1500)
 });
 
@@ -115,11 +123,11 @@ ipcRenderer.on('startNetworkListener', (event, id) => {
         //     callback({ cancel: false });
         // }).id;
 
-       // content.session.webRequest.onBeforeRequest({ urls: ['*://*/*'] }, (details, callback) => {
-       //      g_network.detail_add(details)
-       //      console.log(details)
-       //      callback({ cancel: false });
-       //  })
+        // content.session.webRequest.onBeforeRequest({ urls: ['*://*/*'] }, (details, callback) => {
+        //      g_network.detail_add(details)
+        //      console.log(details)
+        //      callback({ cancel: false });
+        //  })
     }
 })
 
@@ -133,12 +141,12 @@ window.nodejs = {
     dir: __dirname,
     require,
     fs,
+    session,
     path,
     request,
     files,
     cli: require('./cli.js'),
     method: function(data) {
-        console.log(data);
         var d = data.msg;
         switch (data.type) {
             case 'url':
@@ -152,7 +160,7 @@ window.nodejs = {
                 g_toast && g_toast.toast('复制成功', 'success')
                 break;
             case 'toggleFullscreen':
-                app.setFullScreen(!app.fullScreen);
+                _app.setFullScreen(!_app.fullScreen);
                 break;
             case 'openFolder':
                 shell.showItemInFolder(d)
@@ -165,14 +173,17 @@ window.nodejs = {
                 }
                 break;
             default:
-                send( data);
+                if (data.type == 'ondragstart' && d.files.length && getConfig('hideAfterDraged')) {
+                    ipc_send('hide')
+                }
+                send(data);
                 break;
         }
     }
 }
 
-function send(data, method = 'method'){
-    if(typeof(data) != 'object') data = {type: data}
-   ipcRenderer.send(method, data);
+function send(data, method = 'method') {
+    if (typeof(data) != 'object') data = { type: data }
+    ipcRenderer.send(method, data);
 
 }

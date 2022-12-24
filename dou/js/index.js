@@ -1,8 +1,6 @@
 
  $(function() {
-   
      $(window).on('focus', () => !$('.modaled').length && g_clipboard.call('focus'))
-
      $(document).on('mousewheel', '.scroll-x', function(e){
         this.scrollLeft += e.originalEvent.deltaY
      })

@@ -63,7 +63,7 @@ class groupList {
                   </div>
                 </div>
                 
-                <div class="listContent w-full d-flex flex-wrap overflow-y-auto"></div>
+                <div class="listContent w-full d-flex flex-wrap overflow-y-auto" style="max-height: 300px;"></div>
                 <div class="selectedList mt-2 w-full border-start hide">
                      <div class="form-selectgroup">
                         <label class="form-label w-full">
@@ -177,6 +177,10 @@ class groupList {
         })
     }
 
+    getItemText(k){
+        return this.opts.getName ? this.opts.getName(k) : k
+    }
+
     // 返回结构
     updateList() {
         let h = ''
@@ -193,13 +197,14 @@ class groupList {
         for (let [k, items] of Object.entries(Object.assign(this.list, {新添加: this.newst}))) {
             let h1 = ''
             items.forEach(item => {
-                if (item.indexOf(search) != -1) {
+                 if(PinYinTranslate.check(search, this.getItemText(item))){
                     h1 += this.getItemHtml(item, selected.includes(item) ? 'checked' : '')
                 }
             })
+            let header = this.opts.getHeader ? this.opts.getHeader(k) : k
             h += h1 ? `
                 <div class="mt-1 w-full form-selectgroup">
-                    <label class="form-label w-full"><b>${k}</b></label>
+                    <label class="form-label w-full"><b>${header}</b></label>
                     ${h1}
                 </div>
             ` : ''

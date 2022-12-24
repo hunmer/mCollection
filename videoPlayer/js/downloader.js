@@ -36,6 +36,15 @@ var g_downloader = {
 
         g_action.
         registerAction({
+
+            // 检查文件是否存在
+            download_checklist() {
+                for (let [id, item] of Object.entries(self.datas)) {
+                    self.item_update(id, nodejs.files.exists(self.item_getSaveTo(item)) ? 'complete' : 'waitting')
+                }
+                self.data_save()
+                self.refresh()
+            },
             download_title_click(dom) {
                 let id = $(dom).parents('[data-download]').data('download')
                 let d = self.item_get(id)
@@ -98,6 +107,7 @@ var g_downloader = {
             },
             // 全部清空
             download_clear(dom) {
+                self.status = {}
                 for (let id in self.datas) self.item_remove(id)
             },
             download_stopAll() {
@@ -108,20 +118,20 @@ var g_downloader = {
             },
             // 清空已下载
             download_clear_completed(dom) {
-                for (let [id, item] of Object.entries(self.datas)) {
-                    item.finish && self.item_remove(id)
-                }
+                self.item_getList('complete').forEach(id => {
+                    self.item_remove(id)
+                })
             },
             // 打开下载目录
             download_path(dom) {
                 ipc_send('openFolder', getConfig('savePath'))
             }
-        }).registerAction(['download_item_copy', 'download_item_remove', 'download_item_folder'], (dom, action, e) => {
+        }).registerAction(['download_item_copy', 'download_item_start', 'download_item_remove', 'download_item_folder'], (dom, action, e) => {
             let k = $(dom).parents('[data-download]').data('download') || g_menu.key
             let d = self.item_get(k)
             switch (action[0]) {
                 case 'download_item_folder':
-                    let file =  d.pathName.replace('('+cutString(d.pathName, '(', ')', 0, false)+')', '').trim() + '\\' + d.fileName
+                    let file = self.item_getSaveTo(d)
                     if (!nodejs.files.exists(file)) {
                         g_toast.toast('文件不存在', '错误', 'danger');
                     } else {
@@ -134,6 +144,10 @@ var g_downloader = {
 
                 case 'download_item_remove':
                     self.item_remove(k)
+                    break;
+
+                case 'download_item_start':
+                    self.item_start(k)
                     break;
             }
             g_menu.hideMenu('download_item_menu')
@@ -148,6 +162,10 @@ var g_downloader = {
                 text: '复制链接',
                 action: 'download_item_copy'
             }, {
+                icon: 'play',
+                text: '开始任务',
+                action: 'download_item_start'
+            }, {
                 icon: 'trash',
                 text: '删除',
                 class: 'text-danger',
@@ -158,6 +176,11 @@ var g_downloader = {
         self.aria_start();
         self.refresh()
 
+    },
+
+    item_getSaveTo(d) {
+        if (typeof(d) != 'object') d = this.item_get(d)
+        return d.pathName.replace('(' + cutString(d.pathName, '(', ')', 0, false) + ')', '').replace(' ', '') + d.fileName
     },
 
     // 保存ini配置
@@ -187,7 +210,8 @@ var g_downloader = {
                             title: '保存位置',
                             required: true,
                             value: getVal(opts.pathName, g_setting.getConfig('savePath'))
-                        }
+                        },
+
                         /*,
                         switch: {
                             title: '立即下载',
@@ -204,6 +228,7 @@ var g_downloader = {
                     let b = Object.keys(vals).length > 0
                     if (b) {
                         vals.title = vals.fileName
+                        // vals.type = 'media_fetch'
                         this.item_add(new Date().getTime(), vals)
                     }
                     return b
@@ -227,7 +252,7 @@ var g_downloader = {
             let conf = getConfig('aria2c_config')
             self.config = nodejs.require('ini').parse(nodejs.files.read(conf));
             // TODO 如果aria2c位置改变则重新启动aria
-            self.aria2c = require('./aria2c.js')({
+            self.aria2c = require(nodejs.bin+'\\aria2c.js')({
                 path: getConfig('aria2c_path'),
                 conf,
                 config: {
@@ -292,6 +317,7 @@ var g_downloader = {
     },
     item_remove(id) {
         let d = this.item_get(id)
+        this.status[id] && delete this.status[id]
         this.item_getEle(id).remove()
         d.gid && this.aria2c.remove(d.gid).then(gid => {
             // 如果还在下载，则删除源文件和.aira
@@ -318,39 +344,44 @@ var g_downloader = {
         if (d) {
             console.log('startDownload', d)
             this.item_update(id, 'preload')
+            const download = src => {
+                d.realUrl = src
+                if (src.toLowerCase().indexOf('.m3u8') != -1) {
+                    // m3u8-cli 下载
+                    // TODO 下载器自定义回调
+                    this.process.push(g_downloader.m3u8DL([src, '--workDir', d.pathName, '--saveName', getFileName(d.fileName, false)].join(' ') + ' ' + getConfig('m3u8Downloader_args', '--enableDelAfterDone --enableMuxFastStart --disableIntegrityCheck'), {
+                        onOutput: msg => {
+                            console.log(msg)
+                            msg = msg.substr(13, msg.length - 13).replace('Progress: ', '').split("\r\n")[0].trim()
+                            if (msg == '下载失败,程序退出') {
+                                this.item_complete(id, 'error')
+                            } else
+                            if (msg == '任务结束') {
+                                this.item_complete(id)
+                            } else {
+                                this.item_update(id, msg)
+                            }
+                        },
+                        onError: (...args) => {
+                            console.log(args)
+                            this.item_update(id, 'error')
+                        }
+                    }, { shell: false, iconv: true }))
+                } else {
+                    // aria2 下载
+                    this.aria2c.addUris([d]);
+                    // ipc_send('url', src)
+                }
+            }
 
             switch (d.type) {
                 case 'media_fetch':
-                    g_rule.url_parse(d.url, src => {
-                        console.log(src)
-                        if (getExtName(src).toLowerCase() == 'mp4') {
-                            // aria2 下载
-                            this.aria2c.addUris([d]);
-                        } else {
-                            // m3u8-cli 下载
-                            // TODO 下载器自定义回调
-                            //  
-                            this.process.push(g_downloader.m3u8DL([src, '--workDir', d.pathName, '--saveName', getFileName(d.fileName, false)].join(' ') + ' ' + getConfig('m3u8Downloader_args', '--enableDelAfterDone --enableMuxFastStart --disableIntegrityCheck'), {
-                                onOutput: msg => {
-                                    console.log(msg)
-                                    msg = msg.substr(13, msg.length - 13).replace('Progress: ', '').split("\r\n")[0].trim()
-                                    if(msg == '下载失败,程序退出'){
-                                        this.item_complete(id, 'error')
-                                    }else
-                                    if (msg == '任务结束') {
-                                        this.item_complete(id)
-                                    } else {
-                                        this.item_update(id, msg)
-                                    }
-                                },
-                                onError: (...args) => {
-                                    console.log(args)
-                                    this.item_update(id, 'error')
-                                }
-                            }, { shell: false, iconv: true }))
-                        }
-                    })
+                    g_rule.url_parse(d.url, download)
                     break;
+
+                default:
+                    download(d.url)
+
             }
         }
     },
@@ -378,7 +409,7 @@ var g_downloader = {
         $('#download_list').html(this.html_get())
         for (let id in this.datas) {
             let item = this.datas[id]
-            if (item.finish || nodejs.files.exists(item.pathName + item.fileName)) {
+            if ( nodejs.files.exists(item.pathName + item.fileName)) { // item.finish
                 item.status = 'complete'
             } else {
                 item.status = 'waitting'
@@ -388,12 +419,12 @@ var g_downloader = {
     },
     item_complete(id, status = 'complete') {
         let item = this.item_get(id)
-        if(status == 'complete'){
-             item.finish = new Date().getTime()
+        if (status == 'complete') {
+            item.finish = new Date().getTime()
             item.status = 'complete' // 保存
             this.data_save()
+            this.item_update(id, 'complete')
         }
-        this.item_update(id, 'complete')
         setTimeout(() => this.item_next(), 3000)
     },
     status: {}, // 临时信息缓存

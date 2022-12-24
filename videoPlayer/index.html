@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<html>
 
 <head>
     <meta charset="utf-8">
@@ -10,7 +9,7 @@
     <meta name="msapplication-navbutton-color" content="#000000">
     <meta name="apple-mobile-web-app-status-bar-style" content="#000000">
     <meta name="description" content="">
-    <meta name="author" content="hunmer">
+    <meta name="author" content="hunmer" inherit>
     <meta name="keywords" content="">
     <meta property="og:type" content="article">
     <meta property="og:url" content="">
@@ -38,15 +37,30 @@
     <link rel="stylesheet" href="../public/css/index.css">
     <link rel="stylesheet" href="css/index.css">
 </head>
+
 <body>
     <main>
-        <div>
-            <div class="d-flex" id="screen_top">
-                <div class="flex-grow-1 h-full p-0 m-0 ">
-                    <div id="video_tabs" style="height: calc(100vh - 300px)"></div>
-                    <div id="extra_tabs" style="height: 300px;"></div>
-                </div>
-                <div id="detail_tabs" class=" h-full p-0 m-0">
+        <div class="d-flex w-full" id="screen_top" style="height: 100vh;">
+            <div class="flex-grow-1 h-full p-0 m-0 ">
+                <div id="video_tabs" style="height: calc(100vh - 400px)"></div>
+                <div id="extra_tabs" style="height: 400px;">
+                    <div class="btn-group col-12" style="height: 35px;">
+                        <a href="#" class="btn btn-icon" aria-label="Button" data-action="playlist_all" title="播放列表">
+                            <i class="ti ti-list fs-2"></i>
+                        </a>
+                        <a href="#" class="btn btn-icon" aria-label="Button" data-action="cut_setStart" title="设置起点">
+                            <i class="ti ti-brackets-contain-start fs-2"></i>
+                        </a>
+                        <a href="#" class="btn btn-icon" aria-label="Button" data-action="cut_setEnd" title="设置终点">
+                            <i class="ti ti-brackets-contain-end fs-2"></i>
+                        </a>
+                        <a href="#" class="btn btn-icon" aria-label="Button" data-action="cut_start" title="添加裁剪">
+                            <i class="ti ti-cut fs-2"></i>
+                        </a>
+                        <a href="#" class="btn btn-icon" aria-label="Button" data-action="video_reload" title="刷新">
+                            <i class="ti ti-refresh fs-2"></i>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -60,12 +74,12 @@
     <script src="../js/action.js"></script>
     <script src="../js/tabler.helper.js"></script>
     <script src="../public/js/ping-pong.js"></script>
+    <script src="../public/js/pinyin.js"></script>
     <script src="../public/js/setting.js"></script>
     <script src="js/setting.js"></script>
     <script src="../public/js/dropdown.js"></script>
     <script src="../public/js/tabs.js"></script>
     <script src="../js/modal.js"></script>
-    <script src="../js/sidebar.js"></script>
     <script src="../js/menu.js"></script>
     <script src="../public/js/form.js"></script>
     <script src="../public/js/hotkey.js"></script>
@@ -73,24 +87,28 @@
     <script src="../public/js/filedrop.js"></script>
     <script src="../public/js/plugins.js"></script>
     <script src="../public/js/toast.js"></script>
+    <script src="../public/js/sidebar.js"></script>
     <script src="../public/js/sizeable.js"></script>
     <script src="../public/js/border.js"></script>
     <script src="../public/js/style.js"></script>
+    <script src="../public/js/clipboard.js"></script>
+    <script src="../public/js/file-watcher.js"></script>
     <script src="js/style.js"></script>
     <script src="js/filedrop.js"></script>
-    <script src="js/plugins.js"></script>
     <script src="js/downloader.js"></script>
     <script src="js/border.js"></script>
     <script src="js/sizeable.js"></script>
     <script src="js/hotkey.js"></script>
     <script src="js/tabs.js"></script>
+    <script src="js/sidebar_left.js"></script>
+    <script src="js/sidebar_right.js"></script>
     <script src="js/detailTabs.js"></script>
     <script src="js/extraTabs.js"></script>
     <script src="js/videoTabs.js"></script>
-    <script src="js/webview.js"></script>
     <script src="js/player.js"></script>
     <script src="js/rule/rule.js"></script>
     <script src="js/index.js"></script>
+    <script src="js/plugins.js"></script>
 </body>
 
 </html>

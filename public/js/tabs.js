@@ -6,6 +6,7 @@ class TabList {
         this.name = name
         this.opts = Object.assign({
             getTabIndex: () => 1,
+            hideOneTab: true,
         }, opts)
 
         const onEvent = (method, e) => {
@@ -90,7 +91,7 @@ class TabList {
         }
         return r
     }
-
+    
     _parseContent(tab, item) {
         if (!item) item = this.opts.items[tab]
         return `
@@ -106,8 +107,8 @@ class TabList {
         let opts = this.opts
         let i = 0
         for (let tab of Object.keys(opts.items).sort((a, b) => {
-                let a1 = opts.items[a].index || this.opts.getTabIndex(a)
-                let b1 = opts.items[b].index || this.opts.getTabIndex(b)
+                let a1 = opts.items[a].index || this.opts.getTabIndex(a) || 0
+                let b1 = opts.items[b].index || this.opts.getTabIndex(b) || 0
                 return a1 - b1
             })) {
             let item = opts.items[tab]
@@ -119,7 +120,7 @@ class TabList {
         }
 
         let div = this.element()
-        div.find('.tab-tabs:eq(0)').toggleClass('hide1', i <= 1).
+        div.find('.tab-tabs:eq(0)').toggleClass('hide1', opts.hideOneTab && i <= 1).
         find('ul').html(this.opts.header(h))
         h1 && div.find('.tab-content:eq(0)').append(h1)
         this.save()
@@ -163,9 +164,16 @@ class TabList {
         return key
     }
 
+    tab_next(){
+        let tabs = this.tab_tabs()
+        let i = tabs.indexOf(this.currentTab) + 1
+        if(i >= tabs.length) i = 0
+        this.tab_ative(tabs[i])
+    }
+
     // 尝试添加标签
     try_add(func, vals = {}, update = false) {
-        let find = Object.entries(this.opts.items).find(func)
+        let find = this.tab_find(func)
         if (find == undefined) { // 规则不存在
             return this.add(vals)
         }
@@ -176,6 +184,17 @@ class TabList {
 
         this.tab_ative(find[0])
         return find[0]
+    }
+
+    tab_find(func){
+        return Object.entries(this.opts.items).find(func)
+    }
+
+    tab_findTab(value){
+        let find = this.tab_find(([tab, item]) => item.value == value)
+        if(find != undefined){
+            return find[0]
+        }
     }
 
     // 移除标签
@@ -292,7 +311,7 @@ var g_tabs = {
 
     register(name, opts) {
         opts = Object.assign({
-            saveData: true,
+            saveData: false,
             items: g_tabs.getData(name),
             items: {},
             html: `

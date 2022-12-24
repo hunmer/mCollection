@@ -15,7 +15,7 @@ $(function() {
             $('.tab_nav').toggleClass('hide', b)
             if (b) {
                 g_datalist.tabs.tab_tabs().forEach((tab, i) => {
-                    if (i > 0) _datalist.tabs.tab_remove(tab)
+                    if (i > 0) g_datalist.tabs.tab_remove(tab)
                 })
             }
         },
@@ -32,23 +32,39 @@ $(function() {
                 oneTab: {
                     title: '单标签',
                     type: 'switch',
-                    value: getConfig('oneTab', false),
+                    value: () => getConfig('oneTab', false),
                 },
+                  hideAfterDraged: {
+                    title: '拖动片段自动隐藏窗口',
+                    type: 'switch',
+                    value: () => getConfig('hideAfterDraged', false),
+                },
+               
             }
         },
         folders: {
-            title: '同步文件夹',
+            title: '同步',
             icon: 'folders',
             elements: {
                 syncPaths: {
                     title: '同步目录, ||分离',
                     type: 'textarea',
                     rows: 5,
-                    value: getConfig('savePath'),
+                    value: () => getConfig('savePath'),
                 },
             }
         },
-
+        user: {
+            title: '用户',
+            icon: 'user',
+            elements: {
+                 username: {
+                    title: '用户名',
+                    value: () => getConfig('username', ''),
+                },
+               
+            }
+        },
         download: {
             title: '下载',
             icon: 'download',
@@ -67,8 +83,12 @@ $(function() {
                     require: true,
                     type: 'select',
                     list: { copy: '复制', move: '移动', link: '链接' },
-                    value: getConfig(g_db.current + '_importType', 'copy'),
+                    value: () => getConfig(g_db.current + '_importType', 'copy'),
                 },
+                library_pwd: {
+                    title: '素材库权限密码',
+                    value: () => getConfig('library_pwd'),
+                }
             }
         },
 

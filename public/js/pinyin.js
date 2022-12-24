@@ -22,8 +22,19 @@ var PinYinTranslate = {
         }
         return I1.toLowerCase();
     },
+      arraySearch: function(l1, l2) {
+        var that = this;
+        for (var name in that.PinYin) {
+            if (that.PinYin[name].indexOf(l1) != -1) {
+                return that.ucfirst(name);
+                break;
+            }
+        }
+        return false;
+    },
     sz: function(a) {
         if(!this.isChinese(a)) return a;
+
         var that = this;
         var l2 = a.length;
         var I1 = "";
@@ -41,19 +52,9 @@ var PinYinTranslate = {
         }
         return I1.toLowerCase();
     },
-    arraySearch: function(l1, l2) {
-        var that = this;
-        for (var name in that.PinYin) {
-            if (that.PinYin[name].indexOf(l1) != -1) {
-                return that.ucfirst(name);
-                break;
-            }
-        }
-        return false;
-    },
     isChinese: function(s) {
         var patrn = /[\u4E00-\u9FA5]|[\uFE30-\uFFA0]/gi;
-        return patrn.exec(s)
+        return patrn.test(s)
     },
     ucfirst: function(l1) {
         if (l1.length > 0) {
@@ -61,5 +62,12 @@ var PinYinTranslate = {
             var spare = l1.substr(1, l1.length);
             return first + spare;
         }
+    },
+    check(s, f){
+        if(this.isChinese(s)) return f.indexOf(s) != -1
+        let py = PinYinTranslate.start(s);
+        let sz = PinYinTranslate.sz(s);
+        return f.indexOf(s) != -1 || PinYinTranslate.start(f).indexOf(py) != -1 || PinYinTranslate.sz(f).indexOf(sz) != -1
     }
+
 }

@@ -138,7 +138,6 @@ var g_user = {
         this.setLoading(true)
 
         return g_api.douyin_fetchVideos(opts, data => {
-            console.log(data)
             opts.hasMore = data.has_more
             this.setLoading(false)
 
@@ -152,7 +151,7 @@ var g_user = {
                 let item = g_api.getVideoDetail(detail);
                 this.videos[vid] = item
 
-                h += `<div class="card card-sm col-3 mt-2" data-vid="${vid}">
+                h += `<div class="card card-sm col-3 mt-2 h-fit" data-vid="${vid}">
                        <div class="ribbon ribbon-top ribbon-start bg-primary w-unset fs-5 p-1">
                         <b>${time_getRent(item.time)}</b>
                       </div>
@@ -188,7 +187,14 @@ var g_user = {
     },
 
     user_homepage(uid) {
-        $('#user_videos').attr('data-uid', uid)
+        this.opts = {
+            uid,
+            cursor: 0,
+            count: 30,
+            last: 0,
+            hasMore: true,
+        }
+        $('#user_videos').attr('data-uid', uid).html('')
         toast('正在获取用户信息', 'primary');
         g_api.douyin_fetchUser(uid, d => {
             let { icon, name } = d
@@ -205,13 +211,6 @@ var g_user = {
             stati[1].outerText = numToStr(d.following)
             stati[2].outerText = numToStr(d.followers)
             div.getEle({ action: 'foll_switch' }).html(exists ? '取消关注' : '关注').replaceClass('btn-', 'btn-' + (exists ? 'danger' : 'outline-danger'))
-            this.opts = {
-                uid,
-                cursor: 0,
-                count: 30,
-                last: 0,
-                hasMore: true,
-            }
             this.user_nextPage()
         })
     },

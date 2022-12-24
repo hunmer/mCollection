@@ -9,11 +9,12 @@ var g_view = {
     },
     init() {
         const self = this
-        $(`<button class="btn btn-sm dropdown-toggle" data-target-dropdown="datalist_opts" data-dropdown-pos="start,bottom" >
+        $(`<button tabindex="-1" class="btn btn-sm dropdown-toggle" data-target-dropdown="datalist_opts" data-dropdown-pos="start-bottom" >
             <i class="me-1 ti ti-layout-2"></i>
         </button>`).appendTo('#datalist_actions')
+
         g_dropdown.register('datalist_opts', {
-            position: 'start,bottom',
+            position: 'start-bottom',
             offsetTop: 5,
             list: {
                 showmation: {
@@ -38,7 +39,7 @@ var g_view = {
 
         // TODO 注册自定义排序以及视图
         g_dropdown.register('showmation', {
-            position: 'end,top',
+            position: 'end-top',
             offsetLeft: 10,
             alwaysHide: true,
             parent: ['datalist_opts', 'showmation'],
@@ -63,7 +64,7 @@ var g_view = {
         }).init()
 
         g_dropdown.register('datalist_view', {
-            position: 'end,top',
+            position: 'end-top',
             offsetLeft: 10,
             alwaysHide: true,
             parent: ['datalist_opts', 'view'],
@@ -74,20 +75,24 @@ var g_view = {
                     icon: '',
                     action: 'view,default',
                 },
-                list: {
-                    title: '列表视图',
+                table: {
+                    title: '表格视图',
                     icon: '',
-                    action: 'view,list',
+                    action: 'view,table',
                 },
             }
         }).init()
 
         g_dropdown.register('datalist_sort', {
-            position: 'end,top',
+            position: 'end-top',
             offsetLeft: 10,
             alwaysHide: true,
             parent: ['datalist_opts', 'sort'],
             list: {
+                asc: {
+                    title: '反序',
+                    action: 'reverse_toggle',
+                },
                 name: {
                     title: '名称',
                     action: 'sort,name',
@@ -136,6 +141,12 @@ var g_view = {
             show: (dom, action) => {
                 g_setting.toggleValue(action.join(','))
                 g_datalist.view_update()
+            },
+            // 切换倒序
+            reverse_toggle() {
+                g_setting.toggleValue('sort_reverse')
+                g_dropdown.hide('datalist_sort')
+                g_datalist.tab_refresh()
             }
         })
 
@@ -144,11 +155,16 @@ var g_view = {
         onSetConfig(keys, (v, k) => {
             getEle(k).toggleClass('active', v)
         }).
-        onSetConfig('itemWidth', v => {
-            $('.datalist-item').width(v)
-            getEle({ input: 'range_view' }).val(v)
+        onSetConfig({
+            itemWidth(v) {
+                $('.datalist-item').width(v)
+                getEle({ input: 'range_view' }).val(v)
+            },
+            sort_reverse(v){
+                getEle('reverse_toggle').toggleClass('active', v)
+            }
         })
-        g_setting.apply(keys)
+        g_setting.apply(keys).apply('sort_reverse')
     }
 }
 

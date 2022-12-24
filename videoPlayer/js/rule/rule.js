@@ -77,7 +77,7 @@ let g_rule = {
                     information: {
                         title: `$('.page-title').text()`,
                         desc: `$('.video-info-content span').text()`,
-                        cover: `$('.module-info-poster img').src`,
+                        cover: `$('.video-cover img').data('src')`,
                         list: `
                             (() => {
                                 let r = {'播放地址': {}};
@@ -155,13 +155,6 @@ let g_rule = {
         }
     },
     list: {},
-
-    m3u8: [
-        'https://cdn.zoubuting.com/20210721/vE7VLJ1r/hls/index.m3u8',
-        'https://cdn.zoubuting.com/20210721/vE7VLJ1r/hls/index.m3u8',
-        'https://cloud.renrenmi.cc:2323/jiemi?key=BDVVNgM2BmYGNltyURACSlEWAUVSF1UTABg=&sign=1deba959589db90fa8483a8cea56e51a&t=1654264996&ts=1622624594&name=132b07fc8121602b4bd6eda8a90dc814.m3u8'
-    ],
-
     search(keyword) {
         for (let [name, item] of Object.entries(this.rule)) {
             if (item.search) {
@@ -170,23 +163,69 @@ let g_rule = {
         }
     },
 
-    init: function() {
+    init() {
         const self = this
         let rule = {
 
+            追剧兔: {
+                url: 'https://www.zjtu.cc/vodplay/(.*?)/',
+                information: {
+                    title: `$('.cor7').text()`,
+                    desc: `$('.cor3').text()`,
+                    cover: `$('.poster')[0].style.backgroundImage.replace('url("', '').replace('")', '')`,
+                    list: `
+                         (() => {
+                            let r = {};
+                            $('a[data-from]').each((i, tab) => {
+                                let k = '播放列表'+(i+1)
+                                r[k] = {};
+                                $('.player-xl-list ul:eq('+i+') a').each((i1, a) => {
+                                    r[k][a.outerText] = a.href;
+                                })
+
+                            });
+                            return r;
+                        })();
+                    `,
+                }
+            },
+
+            看看屋: {
+                url: 'https://www.kkw361.com/video/(.*?).html',
+                information: {
+                    title: `$('h1').text()`,
+                    desc: `$('.juqing').text()`,
+                    cover: `$('.detail-pic img').attr('src')`,
+                    list: `
+                         (() => {
+                            let r = {};
+                            $('.play-list').each((i, tab) => {
+                                let k = '播放列表'+(i+1)
+                                r[k] = {};
+                                $(tab).find('a').each((i1, a) => {
+                                    r[k][a.outerText] = a.href;
+                                })
+
+                            });
+                            return r;
+                        })();
+                    `,
+                }
+            },
+
             看了么: {
-                url: 'https://www.ksksl.com/voddetail/(.*?).htm',
+                url: 'https://www.ksksl.com/voddetail/(.*?).html',
                 information: {
                     title: `document.querySelector('h1').outerText`,
-                    desc: `document.querySelector('.details-content-default').outerText`,
+                    desc: ``,
                     list: `
                         (() => {
                             let r = {};
-                            $('.list-box.marg').each((i, list) => {
+                            for(let list of document.querySelectorAll('.list-box.marg')){
                                 let n = list.querySelector('h2').outerText
                                 r[n] = {}
                               for(let a of list.querySelectorAll('.play_li a')) r[n][a.outerText] = a.href;
-                            });
+                            }
                             return r;
                         })();
                     `,
@@ -215,10 +254,11 @@ let g_rule = {
                 }
             },
             嘀哩嘀哩: {
-                url: 'https://www.bdys01.com/guoju/mp4/(.*?).htm',
+                url: 'https://www.bdys01.com/(.*?).htm',
                 information: {
                     title: `document.querySelector('h2').outerText`,
                     desc: ``,
+                    cover: `document.querySelector('.cover-lg-max-25 img').src`,
                     list: `
                         (() => {
                             let r = {'播放列表1': {}};
@@ -353,6 +393,28 @@ let g_rule = {
                         `,
                 }
             },
+            饺子录像厅: {
+                url: 'https://www.jiaozi.me/movie/(.*?).html',
+                information: {
+                    title: `document.querySelector('h1.title').innerText`,
+                    desc: `document.querySelector('.desc').innerText`,
+                    cover: `document.querySelector('.picture img').dataset.original`,
+                    list: `
+                       (() => {
+                            let r = {};
+                            let i = 0;
+                            for(let playlist of document.querySelectorAll('.nav-tabs li')){
+                                i++;
+                                r['播放列表'+i] = {}
+                                for(let item of document.querySelectorAll('#playlist'+i+' a')){
+                                    r['播放列表'+i][item.outerText] = item.href;
+                                }
+                            }
+                            return r;
+                        })();
+                        `,
+                }
+            },
             影视之家: this.rule_default(1, 'https://www.wybg666.com/(.*?).html'),
             皮皮泡: this.rule_default(1, 'https://www.pipipao.com/vod/(.*?).html'),
             达达龟: this.rule_default(1, 'http://www.dadagui.com/voddetail/(.*?).html'),
@@ -361,6 +423,8 @@ let g_rule = {
             双十电影: this.rule_default(1, 'https://www.1010dy.vip/detail/(.*?)/'),
             影院之家: this.rule_default(1, 'https://www.txxlcdc.cn/voddetail/(.*?).html'),
             va影视: this.rule_default(1, 'https://www.vays.cn/index.php/vod/detail/id/(.*?).html'),
+
+            netflix: this.rule_default(2, 'https://netflix.mom/voddetail/(.*?).html'), // 
 
             瓜皮TV: this.rule_default(2, 'https://guapitv.xyz/vod/(.*?).html'),
             蓝光影院: this.rule_default(2, 'https://www.lgyy.cc/voddetail/(.*?).html'),
@@ -375,75 +439,138 @@ let g_rule = {
             '87影院': this.rule_default(3, 'https://87dyba.com/voddetail/(.*?).html'),
             '85看': this.rule_default(3, 'https://www.85kankan.com/index.php/vod/detail/id/(.*?).html'),
 
-            麻花影视: this.rule_default(4, 'https://www.mhyyy.com/detail/(.*?).html'),
+            麻花影视: this.rule_default(2, 'https://www.mhyyy.com/detail/(.*?).html'),
             牛马TV: this.rule_default(4, 'https://www.niumatv.cc/vod/(.*?).html'),
-            爱看影院: this.rule_default(4, 'https://www.ikyy.cc/detail/(.*?).html'),
-             um影院: this.rule_default(4, 'https://www.umkan.com/index.php/vod/detail/id/(.*?).html'),
+            爱看影院: this.rule_default(1, 'https://www.ikyy.cc/detail/(.*?).html'),
+            um影院: this.rule_default(4, 'https://www.umkan.com/index.php/vod/detail/id/(.*?).html'),
             视中心影视: this.rule_default(4, 'https://www.ksksi.com/voddetail/(.*?).html'),
             星辰影院: this.rule_default(4, 'https://www.xcyingy.com/vod/(.*?).html'),
-             锐行加速: this.rule_default(4, 'https://www.cjtyy.top/index.php/vod/detail/id/(.*?).html'),
+            锐行加速: this.rule_default(4, 'https://www.cjtyy.top/index.php/vod/detail/id/(.*?).html'),
             小熊影视: this.rule_default(4, 'https://www.xxys520.com/voddetail/(.*?).html'),
             稀饭影视: this.rule_default(4, 'https://www.xifanys.com/yingpiandetail/(.*?).html'),
             '6080': this.rule_default(4, 'https://www.dy6080.vip/video/(.*?).html'),
+            '6080dy1': this.rule_default(4, 'https://www.6080dy1.com/video/(.*?).html'),
 
             我爱跟剧: this.rule_default(5, 'https://www.genmov.com/video/(.*?).html'),
 
             饭团影院: this.rule_default(6, 'https://www.fantuanhd.com/detail/(.*?).html'),
             ab影院: this.rule_default(6, 'https://abu22.com/voddetail/(.*?).html'),
-            
+
             '31看影视': this.rule_default(7, 'http://www.31kan.vip/31kan/(.*?).html'),
             '333影视': this.rule_default(7, 'https://www.ylwt33.com/voddetail/(.*?).html'),
-           
+
         }
         self.list = rule;
 
         // 网络监听
         nodejs.session.fromPartition('persist:webview').webRequest.onBeforeRequest({ urls: ['*://*/*'] }, (details, callback) => {
-            let {url, webContents} = details;
+            let { url, webContents } = details;
             let cancel = false
-            if (url.indexOf('.m3u8') != -1) {
-                // 替换和过滤一些播放器(GET参数带了URL播放地址)
-                ['https://www.tutukiki.com/m3u8/?url=', 'http://www.tutukiki.com/m3u8/?url='].forEach(replace => url = url.replace(replace, ''))
-                self.browser_callback({webContents, url, type: 'url'})
-                cancel = true // 有些m3u8只能访问一次？？
-            } else
-            if (details.resourceType == 'media') {
-                self.browser_callback({webContents, url, type: 'media'})
+            if (webContents) {
+                let type
+                let wid = webContents.id
+
+                let d = self._temp[wid]
+                if (d) {
+                    if (!d.result && new RegExp(d.rule).test(url)) {
+                        type = d.type
+                        d.result = url // 防止重复触发
+                    }
+                } else
+                if (url.indexOf('.m3u8') != -1) {
+                    type = 'url';
+                    // 替换和过滤一些播放器(GET参数带了URL播放地址)
+                    ['https://www.tutukiki.com/m3u8/?url=', 'http://www.tutukiki.com/m3u8/?url='].forEach(replace => url = url.replace(replace, ''))
+                    cancel = true // 有些m3u8只能访问一次？？
+                } else
+                if (details.resourceType == 'media') {
+                    type = 'media'
+                }
+
+                type && self.browser_callback({ webContents, url, type })
             }
+
             callback({ cancel });
         })
+
+        g_action.registerAction({
+            select_parseLink(dom) {
+                if (!isEmpty(dom.value)) {
+                    let { rule, type } = self.test[dom.value]
+                    g_form.setElementVal('prompt_parseLink', { rule, type })
+                }
+            },
+            prompt_parseLink() {
+                g_form.confirm1({
+                    id: 'prompt_parseLink',
+                    title: '解析链接',
+                    elements: {
+                        url: {
+                            title: '链接',
+                            type: 'textarea',
+                            // value: getClipboardText(),
+                            value: 'https://v.youku.com/v_show/id_XMzQxODMxNzA0OA==.html?spm=a2h0c.8166622.PhoneSokuUgc_8.dscreenshot'
+                        },
+                        name: {
+                            title: '类型',
+                            type: 'select',
+                            list: Object.keys(self.test),
+                            props: 'data-action="select_parseLink"',
+                        },
+                        rule: {
+                            title: '捕获规则',
+                        },
+                        type: {
+                            title: '捕获规则',
+                            list: { media: 'm3u8', url: 'mp4' },
+                            type: 'select'
+                        },
+                    },
+                    callback({ vals }) {
+                        let { url, type, rule } = vals
+                        let win = self.url_parse(url, src => {
+                            g_player.newTab({ url, value: src, title: '解析视频' })
+                        }, type)
+                        self._temp[win.webContents.id] = { type, rule }
+                    }
+                })
+            },
+        })
         // this.playlist_parse('https://www.fantuanhd.com/detail/id-1404.html')
-        // this.url_parse('https://www.fantuanhd.com/play/id-1404-4-18.html', url => {
-        //     g_videoTabs.tab_new({
-        //         value: url,
-        //         title: '测试',
-        //     })
-        // })
+
 
         // doAction('cp_loadURL,https://www.fantuanhd.com/detail/id-1404.html')
     },
 
-    browser_callback(opts){
+    _temp: {},
+    test: {
+        youku: {
+            rule: 'https://pl-ali.youku.com/playlist/m3u8?(.*?)',
+            type: 'url'
+        }
+    },
+
+    browser_callback(opts) {
         // if(!opts.web) opts.web = 
         let win = getBrowserWindowFromWebContents(opts.webContents);
         let wid = opts.webContents.id
         if (win) win.close();
-
+        this._temp[wid] && delete this._temp[wid]
         let type = opts.type
-        if(this.ids[wid]){
-            let {events} = this.ids[wid]
+        if (this.ids[wid]) {
+            let { events } = this.ids[wid]
             delete this.ids[wid]
-            if(events[type]){
-                for(let callback of events[type]){
-                    if(callback(opts) === false) return
+            if (events[type]) {
+                for (let callback of events[type]) {
+                    if (callback(opts) === false) return
                 }
             }
         }
     },
 
-    browser_on(wid, eventName, callback){
-        if(this.ids[wid]){
-            if(!this.ids[wid].events[eventName]) this.ids[wid].events[eventName] = []
+    browser_on(wid, eventName, callback) {
+        if (this.ids[wid]) {
+            if (!this.ids[wid].events[eventName]) this.ids[wid].events[eventName] = []
             this.ids[wid].events[eventName].push(callback)
         }
     },
@@ -461,24 +588,28 @@ let g_rule = {
     // 提取页面信息
     detail_fetch: async function(web) {
         let url = web.getURL()
-        let ret = {url}
+        console.log(url)
+        let ret = { url }
         let name = this.url_match(url);
-        let r = this.rule_get(name);
-        console.log(name, r);
-        if (r) {
-            for (let kn in r.information) {
-                let res = await web.executeJavaScript(r.information[kn]);
-                ret[kn] = res;
+        console.log(name)
+        if (name) {
+            let r = this.rule_get(name);
+            console.log(name, r);
+            if (r) {
+                for (let kn in r.information) {
+                    let res = await web.executeJavaScript(r.information[kn]);
+                    ret[kn] = res;
+                }
             }
+            let win = getBrowserWindowFromWebContents(web);
+            if (win) win.close();
         }
-        let win = getBrowserWindowFromWebContents(web);
-        if (win) win.close();
         return ret;
     },
 
     // 匹配播放列表地址
     url_match: function(url, retName = true) {
-       for(let [k, v] of Object.entries(this.list)){
+        for (let [k, v] of Object.entries(this.list)) {
             for (let reg of [].concat(v.url)) {
                 if (new RegExp(reg).test(url)) {
                     if (!retName) {
@@ -495,27 +626,32 @@ let g_rule = {
 
     ids: {},
     playlist_parse(url, callback) {
-       let win = this.browser_build(url)
-       win.webContents.on('did-finish-load', e => {
-            this.detail_fetch(e.sender).then(callback)
-       });
-    },
-
-    url_parse(url, callback){
         let win = this.browser_build(url)
-        this.browser_on(win.webContents.id, 'url', ({url}) => callback(url))
+        // 'did-stop-load'
+        win.webContents.on('dom-ready', e => {
+            this.detail_fetch(e.sender).then(callback)
+        });
     },
 
-    browser_close(url){
-        for(let [id, d] of Object.entries(this.ids)){
-            if(isEmpty(url) || d.url == url){
+    url_parse(url, callback, type) {
+        let win = this.browser_build(url)
+        let wid = win.webContents.id
+        let fun = ({ url }) => callback(url)
+        if (isEmpty(type) || type == 'url') this.browser_on(wid, 'url', fun)
+        if (isEmpty(type) || type == 'media') this.browser_on(wid, 'media', fun)
+        return win
+    },
+
+    browser_close(url) {
+        for (let [id, d] of Object.entries(this.ids)) {
+            if (isEmpty(url) || d.url == url) {
                 !d.win.isDestroyed() && d.win.close()
                 delete this.ids[id]
             }
         }
     },
 
-    browser_build(url){
+    browser_build(url) {
         this.browser_close(url)
 
         let path = nodejs.dir + '\\js\\rule\\'
@@ -526,6 +662,7 @@ let g_rule = {
             webPreferences: {
                 // preload: path + 'preload.js',
                 images: debug,
+                webSecurity: false,
                 offscreen: !debug,
                 partition: "persist:webview",
             }
@@ -541,7 +678,7 @@ let g_rule = {
         }
 
         win.webContents.setAudioMuted(true);
-        
+
         // win.webContents.on('ipc-message', function(event) {
         //     console.log(event);
         //     let d = event.args;

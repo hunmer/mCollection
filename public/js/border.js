@@ -31,13 +31,11 @@ var g_border = {
 			}
 
 			.traffic_icons div:not(:last-child) {
-				margin-right: 5px;
+				margin-right: 10px;
 			}
 			#dragBar i{
 				font-size: 1.2rem;
 			}
-
-
 
 
 		</style>`).prependTo('main')

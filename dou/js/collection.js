@@ -37,6 +37,12 @@ var g_coll = {
             coll_remove(dom) {
                 g_coll.coll_remove(getParentAttr(dom, 'data-vid'))
             },
+            collection_clear(){
+                confirm('你确定清空收藏嘛?', {type: 'danger'}).then(() => {
+                    self.list = {}
+                    self.save()
+                })
+            },
             collection_updateAll(dom) {
                 dom = $(dom)
                 let cnt = 0
@@ -97,8 +103,17 @@ var g_coll = {
         })
 
         g_input.bind({
+            form_coll_reverse({ selected }) {
+                setConfig('coll_reverse', selected)
+                g_coll.refresh()
+            },
+            form_coll_sort({ val }) {
+                setConfig('coll_sort', val)
+                g_coll.refresh()
+            },
             form_coll_groupBy({ val }) {
                 setConfig('coll_groupBy', val)
+                g_coll.refresh()
             },
             form_coll_tags() {
                 let selected = []
@@ -109,11 +124,12 @@ var g_coll = {
             }
         })
 
+        // todo 一次性全部改动
+        const apply = (name, val) => $(`[name="${name}"][value="${val}"]`).prop('checked', true)
         g_setting.onSetConfig({
-            coll_groupBy: val => {
-                $('[name="form_coll_groupBy"][value="' + val + '"]').prop('checked', true)
-                g_coll.refresh()
-            },
+            coll_groupBy: val => apply('form_coll_groupBy', val),
+            coll_sort: val => apply('form_coll_sort', val),
+            coll_reverse: val => apply('form_coll_reverse', val),
         })
 
         g_ui.register('collection', {
@@ -122,29 +138,34 @@ var g_coll = {
                 <div class="page-body d-flex">
                     <div class="border-end row" style="width: 350px;padding-bottom: 50px;" id="filters_collection">
                         <div style="height: calc(100vh - 150px);" class="overflow-y-auto">
-                        <div class="form-label">日期</div>
-                        <div class="datepicker-inline mb-2" id="collection_datepicker"></div>
+                        <div class="datepicker-inline mb-2 hide" id="collection_datepicker"></div>
                         <div class="form-label">标签</div>
                         <div class="mb-2" id="filter_tags"></div>
                         <div class="mb-2 row">
                             <div class="col-6">
-                                <div class="form-label">排序</div>
+                                <div class="form-label">排序
+                                <label class="form-check form-switch float-end">
+                                  <input class="form-check-input" type="checkbox" name="form_coll_reverse">
+                                  <span class="form-check-label">反序</span>
+                                </label>
+                                </div>
                                 <label class="form-check">
-                                    <input type="radio" class="form-check-input" name="form-salary" value="1" checked="">
+                                    <input type="radio" class="form-check-input" name="form_coll_sort" value="time">
                                     <span class="form-check-label">发布时间</span>
                                 </label>
                                 <label class="form-check">
-                                    <input type="radio" class="form-check-input" name="form-salary" value="2" checked="">
+                                    <input type="radio" class="form-check-input" name="form_coll_sort" value="like">
                                     <span class="form-check-label">点赞量</span>
                                 </label>
                                 <label class="form-check">
-                                    <input type="radio" class="form-check-input" name="form-salary" value="3">
-                                    <span class="form-check-label">赞评比</span>
+                                    <input type="radio" class="form-check-input" name="form_coll_sort" value="duration">
+                                    <span class="form-check-label">时长</span>
                                 </label>
                                 <label class="form-check">
-                                    <input type="radio" class="form-check-input" name="form-salary" value="4">
-                                    <span class="form-check-label">账号权重</span>
+                                    <input type="radio" class="form-check-input" name="form_coll_sort" value="" checked>
+                                    <span class="form-check-label">无</span>
                                 </label>
+                                
                             </div>
                             <div class="col-6">
                                 <div class="form-label">分组</div>
@@ -157,9 +178,13 @@ var g_coll = {
                                         <input type="radio" class="form-check-input" name="form_coll_groupBy" value="date">
                                         <span class="form-check-label">按收藏日期</span>
                                     </label>
+                                    <label class="form-check">
+                                        <input type="radio" class="form-check-input" name="form_coll_groupBy" value="none" checked>
+                                        <span class="form-check-label">无</span>
+                                    </label>
                                 </div>
                             </div>
-                            <div class="col-6">
+                            <div class="col-6 hide">
                                 <div class="form-label">分类</div>
                                 <div class="mb-2">
                                     <select class="form-select">
@@ -170,23 +195,9 @@ var g_coll = {
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-6">
-                                <div class="form-label">品</div>
-                                <div class="mb-2">
-                                    <select class="form-select">
-                                        <option selected>全部</option>
-                                    </select>
-                                </div>
-                            </div>
                         </div>
-                        <div class="form-label">视图</div>
-                        <label class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox">
-                            <span class="form-check-label form-check-label-on">不显示图标</span>
-                            <span class="form-check-label form-check-label-off">显示图标</span>
-                        </label>
                         </div>
-                        <div class="mt-2">
+                        <div class="mt-2 hide">
                             <button class="btn btn-primary w-100">
                                 保存过滤条件
                             </button>
@@ -201,8 +212,8 @@ var g_coll = {
                                 <div class="col d-flex">
                                 </div>
                                 <div class="col-12 col-md-auto ms-auto">
-                                    <a class="btn" data-action="following_add">
-                                        <i class="ti ti-plus fs-2"></i>
+                                    <a class="btn btn-danger" data-action="collection_clear">
+                                        <i class="ti ti-trash fs-2"></i>
                                     </a>
                                 </div>
                                 <div class="col-12 col-md-auto ms-auto ">
@@ -212,36 +223,45 @@ var g_coll = {
                                 </div>
                             </div>
                         </div>
-                        <div class="overflow-y-auto" id="coll_list" style="height: calc(100vh - 150px);"></div>
+                        <div class="overflow-y-auto overflow-x-hidden" id="coll_list" style="height: calc(100vh - 150px);"></div>
                     </div>
                 </div>
                     `,
             onHide(hide) {
                 if (!hide) {
-                    g_setting.apply(['coll_groupBy'])
+                    g_setting.apply(['coll_groupBy', 'coll_sort'])
                     g_coll.refresh()
                 }
             }
         })
 
+        this.initDates()
         let path = 'js/plugins/litepicker/'
         let picker = new easepick.create({
             element: $('#collection_datepicker')[0],
             lang: 'zh-CN',
             inline: true,
-            css: [path + 'index.css', path + 'range.css', path + 'preset.css'],
-            plugins: ["RangePlugin", "PresetPlugin"],
+            css: [path + 'index.css', path + 'lock.css'],
+            plugins: ['LockPlugin', 'AmpPlugin'],
+            AmpPlugin: {
+                dropdown: {
+                    months: true,
+                    years: true,
+                },
+                resetButton: true,
+            },
             buttonText: {
                 previousMonth: `<i class="ti ti-chevron-left"></i>`,
                 nextMonth: `<i class="ti ti-chevron-right"></i>`,
             },
-            PresetPlugin: {
-                position: 'bottom',
+            LockPlugin: {
+                filter(date, picked) {
+                    return !self.allowedDates.has(date.format('YYYY-MM-DD'));
+                },
             },
         });
-        picker.on('select', date => {
-            console.log(picker.getStartDate(), picker.getEndDate())
-        });
+        picker.on('select', ({ detail }) => self.refresh());
+        picker.on('clear', () => self.refresh());
         this.coll_picker = picker
         // g_ui.show('foll_updates')
     },
@@ -305,11 +325,18 @@ var g_coll = {
 
     },
 
+    // 初始化允许选中日期
+    initDates() {
+        this.allowedDates = new Set()
+        this.entries((key, value) => this.allowedDates.add(new Date(value.time).format('yyyy-MM-dd')))
+    },
+
     coll_remove(vid) {
         let d = this.get(vid)
         if (d) {
             // TODO UNDO 
             // todo 如果这个card里没有其他的元素 则删除整个card...
+            g_plugin.callEvent('coll_remove', { vid, d })
             this.getEle(vid).remove() // 从收藏列表移除
             this.remove(vid, false)
             return true
@@ -331,15 +358,36 @@ var g_coll = {
         return added
     },
 
+    coll_count(callback) {
+        let i = 0
+        this.entries((key, value) => {
+            if (callback(key, value)) i++
+        })
+        return i
+    },
+
     // 刷新用户展示
-    refresh(sort, tags) {
-        $('#filter_tags').html(g_tag.getHtml('form_coll_tags', getConfig('coll_tags', [])))
-        if (!sort) sort = getConfig('coll_groupBy', 'date')
+    refresh(group, tags) {
+        if (!group) group = getConfig('coll_groupBy', 'date')
         if (!tags) tags = getConfig('coll_tags', '').split(',').filter(s => s != '')
+        let date = this.coll_picker.getDate()
+        if (date) {
+            let start = date.getTime()
+            date = [start, start + 86400 * 1000]
+        }
+        $('#filter_tags').html(g_tag.getHtml('form_coll_tags', tags, false))
+
         // 分组
         let r = {}
-        let getKey, getHeader
-        switch (sort) {
+        let getKey = () => '', getHeader = (k, v) => `
+            <div class="row align-items-center">
+                <div class="col">
+                    <div class="card-title">${k}</div>
+                    <div class="card-subtitle">${r[k].length+'个视频'}</div>
+                </div>
+            </div>`
+
+        switch (group) {
             case 'user':
                 getKey = (k, v) => v.user.name
                 getHeader = (k, v) => `
@@ -355,18 +403,16 @@ var g_coll = {
                 break;
 
             case 'date':
-                getKey = (k, v) => getFormatedTime(4, v.lastView) // v.time
-                getHeader = (k, v) => `
-                <div class="row align-items-center">
-                    <div class="col">
-                        <div class="card-title">${k}</div>
-                        <div class="card-subtitle">${r[k].length+'个视频'}</div>
-                    </div>
-                </div>`
+                getKey = (k, v) => getFormatedTime(4, v.time) // v.time
+               
+                break;
+
+            default: 
                 break;
         }
         for (let [k, v] of Object.entries(this.list)) {
             if (tags.length && !arr_include(tags, v.tags || [])) continue;
+            if (date && !(v.time >= date[0] && v.time <= date[1])) continue;
             // 用户分组
             // TODO USER UID
             let key = getKey(k, v)
@@ -375,10 +421,16 @@ var g_coll = {
         }
 
         let h = ''
-        for (let key in r) {
+        let sort = getConfig('coll_sort', '')
+        let reverse = getConfig('coll_reverse', false)
+        for (let [key, ids] of Object.entries(r)) {
             let h1 = ``
-            r[key].sort((a, b) => {
-                // 
+            ids.sort((a, b) => {
+                if (sort != '') {
+                    let a1 = this.get(a)
+                    let b1 = this.get(b)
+                    return reverse ? a1[sort] - b1[sort] : b1[sort] - a1[sort]
+                }
             }).forEach(vid => {
                 let item = this.get(vid)
                 if (!h1) {
@@ -389,9 +441,6 @@ var g_coll = {
                             ${getHeader(key, item)}
                         </div>
                         <div class="card-actions">
-                            <a  class="btn btn-danger">
-                                <i class="ti ti-bell"></i>
-                            </a>
                             <a  class="btn btn-outside">
                                 <i class="ti ti-dots"></i>
                             </a>
@@ -406,7 +455,7 @@ var g_coll = {
                 h += h1 + `</div></div>`
             }
         }
-        $('#coll_list').html(h)
+        $('#coll_list').html(h).find('.lazyload').lazyload()
     },
 
     // 获取视频卡片结构
@@ -416,7 +465,7 @@ var g_coll = {
                 <b>${time_getRent(v.time)}</b>
               </div>
               
-                <a class="d-block"><img src="${v.cover}" class="card-img-top w-full" data-loadVideo data-action="coll_video_click" draggable="false"></a>
+                <a class="d-block"><img src="res/loading.gif" data-src="${v.cover}" class="card-img-top w-full lazyload" data-loadVideo data-action="coll_video_click"></a>
                 <div class="card-body p-1">
                     <div class="d-flex align-items-center">
                         <div class="ms-auto">
@@ -464,6 +513,7 @@ var g_coll = {
     save(refresh = true) {
         local_saveJson('collection', this.list);
         refresh && this.refresh();
+        this.initDates()
     },
 
     entries(callback) {

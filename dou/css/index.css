@@ -20,24 +20,27 @@
     height: 18px;
     width: 18px;
     top: -5px;
-    right: -9px; /* half the width */
+    right: -9px;
+    /* half the width */
     border-radius: 9px;
 }
 
 .slider-hide .noUi-tooltip {
     display: none;
 }
+
 .slider-hide .noUi-active .noUi-tooltip {
     display: block;
 }
 
-.noUi-handle:after, .noUi-handle:before {
+.noUi-handle:after,
+.noUi-handle:before {
     content: unset !important;
 
 }
 
 #account_list .active .avatar {
-    border:  3px solid var(--tblr-warning);
+    border: 3px solid var(--tblr-warning);
     scale: 1.25;
 }
 
@@ -50,7 +53,7 @@ img {
 }
 
 /* 隐藏没激活的tab */
-._content:not(.active){
+._content:not(.active) {
     display: none
 }
 
@@ -89,7 +92,7 @@ img {
 
 .ui_btn_active {
     background-color: var(--tblr-azure);
-   color: var(--tblr-light) !important;
+    color: var(--tblr-light) !important;
 }
 
 li.dropdown {
@@ -99,19 +102,18 @@ li.dropdown {
 
 /* 修复dropdown高度会溢出 */
 .ui_btn_active .nav-link {
-   color: var(--tblr-light) !important;
+    color: var(--tblr-light) !important;
 }
 
 #detail_tabs .card-body.h-full {
     padding: 0;
 }
 
-.theme-dark .nav-link.active{
+.theme-dark .nav-link.active {
     background: unset;
     border: 1px solid;
 }
 
 
-#dy_tabs .nav-link.active {
+#dy_tabs .nav-link.active {}
 
-}

@@ -9,7 +9,7 @@ var g_menu = {
                 left: 0;
                 width: 100%;
                 height: 100%;
-                z-index: 99999;
+                z-index: 2;
                 display: none;
             }
         </style>`).appendTo('body') 
@@ -136,7 +136,7 @@ var g_menu = {
     // 底层方法
     registerContextMenu(selector, callback) {
         let down = this.down;
-        $('body')
+        $('html')
             .on('touchstart', selector, function(event) {
                 let dom = $(this);
                 down.start = getNow();

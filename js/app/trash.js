@@ -1,5 +1,5 @@
     g_dropdown.register('menu_trash', {
-        position: 'top,end',
+        position: 'top-end',
         offsetLeft: 5,
         list: {
             clear: {
@@ -10,7 +10,6 @@
             }
         }
     })
-
     g_action.registerAction({
         menu_trash: dom => g_dropdown.show('menu_trash', dom),
         trash_clear: () => {

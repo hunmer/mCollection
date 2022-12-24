@@ -13,6 +13,9 @@ var g_tags = {
 
         g_action.
         registerAction({
+            showTag(dom){
+                self.showTag(dom.dataset.tag)
+            }
             // selectedList: dom => {
 
             // },
@@ -38,11 +41,26 @@ var g_tags = {
         tags.forEach(({ tags }) => {
             // TODO 获取标签总标记数量？
             tags.split('||').filter(tag => tag.trim() != '').forEach(tag => {
-                if(!r[tag]) r[tag] = 0
+                if (!r[tag]) r[tag] = 0
                 r[tag] += 1
             })
         })
         return r
+    },
+
+    tag_search(tags) {
+        return g_data.all('SELECT * FROM videos '+this.tag_getRule(tags))
+    },
+
+    tag_getRule(tags) {
+        return `WHERE deleted=0 AND tags LIKE '%||${(Array.isArray(tags) ? tags : [tags]).join('||')}||%'`
+    },
+
+    showTag(tags) {
+        g_datalist.rule_new({
+            title: '标签搜索',
+            rule: this.tag_getRule(tags)
+        })
     },
 
     // 返回所有标签
@@ -63,14 +81,12 @@ var g_tags = {
     },
 
     item_toggleTags(md5, added, removed) {
-         g_data.data_arr_changes(md5, 'tags', added, removed)
+        g_data.data_arr_changes(md5, 'tags', added, removed)
     },
 
-    item_setTags(md5, folder, add = true) {
-        return g_data.data_arr_toggle(md5, 'tags', folder, add)
+    item_setTags(md5, tag, add = true) {
+        return g_data.data_arr_toggle(md5, 'tags', tag, add)
     },
-
-
 }
 
 g_tags.init()

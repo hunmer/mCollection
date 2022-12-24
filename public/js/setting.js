@@ -32,12 +32,13 @@ var g_setting = {
                         },
                     }),
                 }, {
-                    id: 'settings',
                     title: '设置',
+                    id: 'settings',
                     bodyClass: 'p-0',
                     btn_ok: '保存',
                     once: true,
                     onBtnClick: (btn, modal) => {
+                        // TODO 怎么回调form事件？ plugin?
                         if (btn.id == 'btn_ok') {
                             for (let [k, v] of Object.entries(g_form.getChanges('settings'))) {
                                 setConfig(k, v)
@@ -89,6 +90,7 @@ var g_setting = {
             if (check(v) === false) continue
             this.call(k, v)
         }
+        return this
     },
 
     setConfig(k, v) {
@@ -104,8 +106,7 @@ var g_setting = {
             return r
         }
         var v = g_config[k];
-        if (typeof(v) == 'undefined') v = def != undefined ? def : this.getDefault(k);
-        return v;
+        return isEmpty(v) ? def == undefined ? this.getDefault(k) : def : v
     },
 
     toggleValue(k, b) {
@@ -151,3 +152,4 @@ function setConfig(k, v) {
      let proxy = getConfig('proxy')
      return proxy ? { proxy, http_proxy: proxy, https_proxy: proxy } : {}
  }
+

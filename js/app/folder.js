@@ -10,13 +10,7 @@ g_folder.init({
         $(`[data-list="folder"]`).prop('draggable', true)
         save && this.save()
     },
-})
-
-g_action.
-registerAction({
-
-    category_folder: dom => { // 展开目录
-        let name = dom.dataset.name
+    showFolder(name) {
         let h = ''
         let datas = []
         for (let [k, v] of Object.entries(g_folder.folder_getItems(name, true))) {
@@ -45,7 +39,7 @@ registerAction({
                 collapse_end: `</div>`,
             })
             accordion.find(`[data-list="folder"]`).prop('draggable', true)
-            $(dom).parent('.row').append(accordion)
+            getEle({action: 'category_folder', list: 'folder', name}).parent('.row').append(accordion)
 
         }
         // 如果存在父目录过滤器，则应用规则
@@ -57,6 +51,16 @@ registerAction({
         // 或者有按住ctrl
         g_datalist.rule_new(g_filter.getPreset('folder', name)) // TODO 更精准查找?
         // 直接展示目录项目
+    },
+})
+
+g_action.
+registerAction({
+    category_folder: dom => { // 展开目录
+        g_folder.showFolder(dom.dataset.name)
+    },
+    showFolder(dom){
+        g_folder.showFolder(dom.dataset.folder)
     }
 })
 
@@ -70,7 +74,7 @@ registerAction('folder', (dom, action) => {
 })
 
 g_dropdown.register('actions_folders', {
-    position: 'top,end',
+    position: 'top-end',
     offsetLeft: 5,
     list: {
         edit: {
@@ -110,6 +114,7 @@ g_menu.registerMenu({
 
 g_drag.register('folder', {
     selector: '[data-list="folder"]',
+    target: '[data-list="folder"]',
     html: `<span class="badge bg-primary position-absolute" id="badge_darging_folder"></span>`,
     onDragStart: e => {
         e.dataTransfer.setData('folder', e.target.dataset.name);

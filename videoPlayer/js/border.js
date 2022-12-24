@@ -7,13 +7,6 @@ g_border.init({
 		this.bar.html(`
 			<header class="navbar navbar-expand-md w-full p-0" style="height:30px;min-height: unset;">
             <div class="p-0 w-full d-flex flex-grow-1 ms-2" style="height:30px">
-                <h1 class="navbar-brand navbar-brand-autodark d-none-navbar-horizontal pe-0 pe-md-3 app-region-darg">
-                    <a href=".">
-                        <img src="./favicon.svg" width="26" height="26" alt="mDou" class="me-2">
-                        <b id="title" class="flex-fill">VideoPlayer</b>
-                    </a>
-                </h1>
-
                 <div class="navbar-nav flex-row order-md-last align-items-center"  style="min-height: unset;">
                     <div id="traffic">
                         <div class="traffic_icons d-flex align-items-center m-0" style="font-size: 1.2rem;margin-top: 2px;">
@@ -31,16 +24,28 @@ g_border.init({
                 <div class="collapse navbar-collapse" id="navbar-menu">
                     <div class="d-flex flex-column flex-md-row flex-fill align-items-stretch align-items-md-center">
                         <ul class="navbar-nav">
+                             <li class="nav-item">
+                                <a class="nav-link" href="#" data-action="sidebar_toggle,left">
+                                  <i class="ti ti-layout-sidebar"></i>
+                                </a>
+                            </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="#" data-action="ui,foll_updates">
                                   <span class="nav-link-title">视频</span>
                                 </a>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#" data-action="ui,collection">
-                                  <span class="nav-link-title">收藏</span>
+                            <li class="nav-item dropdown" >
+                                <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false">
+                                    <span class="nav-link-title">
+                                        解析
+                                    </span>
                                 </a>
+                                <div class="dropdown-menu  dropdown-menu-arrow bg-dark text-white">
+                                    <a class="dropdown-item" href="#" data-action="prompt_parseLink">解析链接</a>
+                                    <a class="dropdown-item" href="#" data-action="prompt_parsePlaylist">解析播放列表</a>
+                                </div>
                             </li>
+
                             <li class="nav-item dropdown" >
                                 <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false">
                                     <span class="nav-link-title">
@@ -48,9 +53,8 @@ g_border.init({
                                     </span>
                                 </a>
                                 <div class="dropdown-menu  dropdown-menu-arrow bg-dark text-white" id="dropdown_plugins">
-                                    <a class="dropdown-item" href="#" data-action="modal_plugin">
-                                        插件列表
-                                    </a>
+                                    <a class="dropdown-item" href="#" data-action="modal_hotkey">快捷键列表</a>
+                                    <a class="dropdown-item" href="#" data-action="modal_plugin">插件列表</a>
                                     <div class="dropdown-divider"></div>
 
                                 </div>

@@ -53,7 +53,9 @@ var g_db = {
 
         g_action.registerAction({
             db_clear: dom => {
-                g_data.run(`DELETE FROM videos;`).then(() => location.reload())
+                confirm('你确定要清空所有数据库嘛?', {type: 'danger'}).then(() => {
+                    g_data.run(`DELETE FROM videos;`).then(() => location.reload())
+                })
             },
             db_menu: dom => g_dropdown.show('db_menu', dom),
             db_new: () => self.db_edit(),
@@ -61,14 +63,14 @@ var g_db = {
             db_open: () => self.db_open(),
             db_manager: () => self.db_manager(),
             db_switch: (dom, action) => self.db_switch(action[1] || $(dom).parents('[data-db]').data('db')),
-
         })
 
         g_dropdown.register('db_menu', {
-            position: 'end,top',
+            position: 'end-top',
             offsetLeft: 5,
+            autoClose: 'true',
             parent: ['menu', 'db'],
-            onShow(e) {
+            list(){
                 let list = Object.assign({
                     new: {
                         title: '新建资源库',
@@ -87,18 +89,27 @@ var g_db = {
                         type: 'divider'
                     }
                 })
-                self.entries((name, item) => {
-                    list[name] = {
-                        title: item.title,
-                        icon: item.icon || 'box',
-                        action: 'db_switch,' + name
-                    }
-                })
-                this.opts.list = list
+                // 素材库列表
+                return Object.assign(list, self.toDropdown())
             },
         }).init()
+
+       
     },
 
+    toDropdown(action = 'db_switch'){
+        let list = {}
+        this.entries((name, item) => {
+            list[name] = {
+                title: item.title,
+                class: name == g_db.current ? 'active' : '',
+                icon: item.icon || 'box',
+                action: action+',' + name,
+                attr: 'tabindex="0"'
+            }
+        })
+        return list
+    },
 
     entries(callback) {
         for (let [name, item] of Object.entries(this.list)) {
@@ -325,10 +336,9 @@ var g_db = {
     db_read(opts) {
         opts = Object.assign({
             table: g_db.table_sqlite,
-            config: {
+            config: g_db.getOption ? g_db.getOption(opts) : {
                 readonly: false
             }
-
         }, opts)
 
         let exists = files.exists(opts.file);

@@ -19,27 +19,6 @@
 	margin-bottom: 5px;
 }
 
-._dropdown {
-	display: none;
-}
-
-/* dropdown 固定宽度  */
-._dropdown.dropdown-menu {
-    width: 100px;
-    min-width: unset !important;
-    word-break: keep-all;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-._dropdown.dropdown-menu li {
-	padding: 0 6px;
-}
-
-._dropdown.dropdown-menu .dropdown-item {
-	padding: 2px;
-}
 
 
 .color {
@@ -66,4 +45,8 @@
 .colorpicker .form-colorinput-color,.form-control-color {
 	width: 20px;
 	height: 20px;
+}
+
+* {
+	tab-index: -1;
 }

@@ -1,5 +1,5 @@
 g_data.init({
-      // 插入数据
+    // 插入数据
     data_add(d) {
         return this.run(`INSERT INTO videos (tags, title, folders, json, desc, md5, date, birthtime, score, size, ext, deleted) VALUES (@tags, @title, @folders, @json, @desc, @md5, @date, @birthtime, @score, @size, @ext, @deleted)`, this.data_format(d))
     },
@@ -20,19 +20,44 @@ g_data.init({
                 </div>
             `,
             exts: ['mp4', 'ts', 'm3u8', 'flv', 'mp3', 'wav', 'ogg'], // TODO: 支持的文件列表
-            onParse(r) {
+            async onParse(r) {
                 // TODO 专门处理目录拖动的窗口...
                 for (let dir of r.dirs) {
-                    nodejs.files.dirFiles(dir, this.exts, files => {
-                        r.files = r.files.concat(files)
-                    })
+                    r.files.push(...await nodejs.files.dirFiles(dir, this.exts))
                 }
-                g_data.file_revice(r.files)
+                g_data.file_preRevice(r.files)
             }
         })
         this.db = g_db.db_switch(getConfig('db'))
         setTimeout(() => this.tasker_updateCnt(), 2000)
     },
+    file_preRevice(files) {
+        console.log(files)
+        let onClose = () => g_modal.remove('progress_beforeImport')
+        if (!files.length) return
+        let progress = new Progress('beforeImport', {
+            datas: files,
+            logText: '<p><b class="text-success">√ 成功解析:</b>\n<b>%%s%%</b></p>',
+            onProgress: i => i >= 100 && onClose(),
+            onClose
+        }).build(html => {
+            alert(html, {
+                id: 'progress_beforeImport',
+                title: '解析媒体中...',
+                btn_ok: '取消',
+                scrollable: true,
+            }).then(() => {
+                progress.destroy()
+                if (progress.val < 100) {
+                    // 取消
+                }
+            })
+        })
+        g_data.file_revice(files, true, item => {
+            progress.setSloved(item.file)
+        })
+    },
+
     timer_updateCnt: 0,
     // 更新过滤器的结果数
     tasker_updateCnt(start = true) {
@@ -55,31 +80,35 @@ g_data.init({
         console.log(data)
         // todo 在这里把data缺少的参数补上
         // 能否接受数组参数？外部计算md5不方便
-        for (let k in data) {
-            data[k] = Object.assign({
-                scrore: 0,
-                tags: [],
-                folders: [],
-                link: '',
-                title: '',
-                desc: '',
-                birthtime: 0,
-                size: 0,
-                score: 0,
-                json: {},
-                deleted: 0,
-                date: new Date().getTime()
-            }, data[k])
-        }
+        return new Promise(reslove => {
 
-        this.data_insert(data, i => {
+            for (let k in data) {
+                data[k] = Object.assign({
+                    scrore: 0,
+                    tags: [],
+                    folders: [],
+                    link: '',
+                    title: '',
+                    desc: '',
+                    birthtime: 0,
+                    size: 0,
+                    score: 0,
+                    json: {},
+                    deleted: 0,
+                    date: new Date().getTime()
+                }, data[k])
+            }
 
-        }, added => {
-            // TODO判断是否符合当前过滤器
-            if (added.length) g_datalist.tab_loadItems(added, g_datalist.tab_getCurrent(), 'prependTo')
+            this.data_insert(data, i => {
+
+            }, added => {
+                // TODO判断是否符合当前过滤器
+                if (added.length) g_datalist.tab_loadItems(added, g_datalist.tab_getCurrent(), 'prependTo')
+                reslove(added)
+            })
         })
-    },
 
+    },
 
     // 添加数据
     async data_insert(data, onProgress, onDone) {
@@ -147,10 +176,10 @@ g_data.init({
                 case 'copy':
                 case 'move':
                     g_tasker.task_add(type + '_' + md5, {
-                        type: type,
-                        saveTo: saveTo,
+                        type,
+                        saveTo,
                         file: d.file,
-                        md5: md5
+                        md5
                     }, {
                         onComplete: ret => {
                             //nodejs.files.exists(ret.saveTo)

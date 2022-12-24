@@ -1,5 +1,16 @@
 var g_action = {
-    list: {},
+    list: {
+        openFile(dom){
+            nodejs.files.openFile(dom.dataset.file)
+        }
+    },
+    hover: {},
+    clearTimeout(action){
+        if(this.hover[action]){
+            clearTimeout(this.hover[action])
+            delete this.hover[action]
+        }
+    },
     init: function() {
         const self = this
         let doAction = (dom, action, event) => {
@@ -9,16 +20,12 @@ var g_action = {
 
         $(document)
             .on('mouseenter', '[data-hover]', function(event) {
-                this.hoverTimer = setTimeout(() => {
-                    delete this.hoverTimer
-                    doAction(this, this.dataset.hover, event);
-                }, this.dataset.hoverTime || 0)
+                let action = this.dataset.hover
+                self.clearTimeout(action)
+                self.hover[action] = this.hoverTimer = setTimeout(() => doAction(this, action, event), this.dataset.hovertime || 0)
             })
             .on('mouseleave', '[data-out]', function(event) {
-                if (this.hoverTimer) {
-                    clearTimeout(this.hoverTimer)
-                    delete this.hoverTimer
-                }
+                self.clearTimeout(this.dataset.hover || this.dataset.outfor)
                 doAction(this, this.dataset.out, event);
             })
             .on('click', '[data-url]', function(event) {
@@ -26,6 +33,11 @@ var g_action = {
             })
             .on('click', '[data-action]', function(event) {
                 doAction(this, this.dataset.action, event);
+            })
+            .on('mousedown', '[data-mousedown]', function(event) {
+                if(event.which == 1){ // 左键
+                    doAction(this, this.dataset.mousedown, event);
+                }
             })
             .on('dblclick', '[data-dbclick]', function(event) {
                 doAction(this, this.dataset.dbclick, event);
@@ -46,7 +58,17 @@ var g_action = {
                 doAction(this, this.dataset.contenx, event);
                 clearEventBubble(event);
             })
-           
+            .on('keydown',  e => { // 回车键会触发焦点的action
+                if (e.keyCode == 13) {
+                    let active = document.activeElement
+                    let action = active.dataset.action
+                    if (!isEmpty(action)) {
+                        active.click()
+                        clearEventBubble(e);
+                    }
+                }
+            })
+
     },
     registerAction: function(name, callback) {
         let isArr = Array.isArray(name)

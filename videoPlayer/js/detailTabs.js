@@ -27,7 +27,7 @@ var g_detailTabs = {
 
         // 'js/detailTabs/cut.js',, 'js/detailTabs/rule.js', 
         loadRes([  'js/detailTabs/clips.js', 'js/detailTabs/meta.js', 'js/detailTabs/playlist.js', 'js/detailTabs/cupfox.js', 'js/detailTabs/coll.js', 'js/detailTabs/downlist.js'], () => {
-          g_playlist.playlist_loadLast()
+          // 
             // let timer =  setTimeout(() => {
             //      g_modal.remove('alert_loadLast')
             // }, 1500)
@@ -44,9 +44,11 @@ var g_detailTabs = {
     // videoTab事件
     videoTabEvent(event, args) {
         // 传递给组件
-        for (let [id, { opts, inst }] of Object.entries(this.instance)) {
-             opts.onVideoEvent && opts.onVideoEvent(event, args)
-        }
+        g_plugin.callEvent('videoTabEvent', {event, args}).then(({event, args}) => {
+            for (let [id, { opts, inst }] of Object.entries(this.instance)) {
+                 opts.onVideoEvent && opts.onVideoEvent(event, args)
+            }
+        })
         // if(event == 'show'){
         //     g_detailTabs.tabs.tab_ative('clips') // 默认展示裁剪列表
         // }

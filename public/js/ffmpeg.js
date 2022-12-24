@@ -21,17 +21,17 @@ var g_ffmpeg = {
 
     async video_cover(md5, time = 0) {
         let d = await g_data.data_get(md5)
-        let file = g_item.item_getVal('file', d)
-        if (!nodejs.files.exists(file)) return
-        let saveTo = g_db.getSaveTo(md5) + 'cover.jpg'
+        let input = g_item.item_getVal('file', d)
+        if (!nodejs.files.exists(input)) return
 
+        let output = g_db.getSaveTo(md5) + 'cover.jpg'
         g_ffmpeg.video_cover1({
             params: time,
-            input: file,
-            output: saveTo,
+            input,
+            output,
             size: '240x180',
         }, () => {
-            g_item.item_setCover(md5, saveTo)
+            g_item.item_setCover(md5, output)
         })
     },
 

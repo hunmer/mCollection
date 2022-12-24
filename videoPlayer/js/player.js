@@ -3,21 +3,73 @@ var g_player = {
     init() {
         const self = this
         loadRes(['js/dplayer/DPlayer.min.js', 'js/dplayer/hls.min.js'], () => {
-            
+            let last = getConfig('lastPlay')
+            last && self.newTab(last)
         })
 
-        let getBtn = () => g_playlist.playlist_getItem(g_videoTabs.tabs.tab_getValue().url)
         g_action.registerAction({
-            playPrev(){
-                getBtn().prev().click()
+            playPrev() {
+                g_plugin.callEvent('playPrev')
             },
-            playNext(){
-                getBtn().next().click()
+            playNext() {
+                g_plugin.callEvent('playNext')
+            }
+        })
+
+        g_plugin.registerEvent('modal_show', () => {
+            self.getPlayer().tryPause()
+        })
+        g_plugin.registerEvent('modal_hide', () => {
+            self.getPlayer().tryPlay()
+        })
+
+        $(window).on('blur', () => self.getPlayer().tryPause()).on('focus', () => self.getPlayer().tryPlay())
+        $(document).
+        on('mousewheel', '#video_tabs video', function(e) {
+            if (!$('input:focus').length) {
+                let video = g_player.getPlayer().video
+                self.onMouseWheel(e, video).then(add => video.currentTime += add)
             }
         })
     },
 
+    onMouseWheel(e, video, def = 1) {
+        return new Promise(reslove => {
+            e = e.originalEvent || e
+            let duration = video.duration
+            let opts = {
+                'alt': 1,
+                'ctrl': 5,
+                'shift': 'duration * 0.01',
+                'alt+shift': 'duration * 0.05',
+                'ctrl+shift': 'duration * 0.1',
+            }
+            if (!isNaN(duration)) {
+                let key = g_hotkey.getInputCode(e, 'key')
+                let add = eval(opts[key]) || def
+                reslove(e.deltaY > 0 ? 0 - add : add)
+                clearEventBubble(e);
+            }
+        })
+    },
+
+    newTab(opts) {
+        let tab = g_videoTabs.tab_new(Object.assign({
+            // value: src,
+            // title,
+            // url, // 网页链接
+            poster: '',
+            // folder, // 数据保存目录
+        }, opts))
+        setConfig('lastPlay', opts)
+        getConfig('autoPlay') && g_videoTabs.tabs.getContent(tab).getEle('video_reload').click()
+        setTimeout(() => g_detailTabs.tabs.tab_ative('clips'), 500)
+    },
+
     newPlayer(tab, container, video, onLoaded, onError) {
+        if(nodejs.files.exists(video.url)){
+             video.url = encodeURI(video.url.replaceAll('\\', '/')).replaceAll('#', '%23') 
+        }
         let config = {
             hotkey: true,
             autoplay: true,
@@ -38,12 +90,12 @@ var g_player = {
             },
             contextmenu: [{
                     text: '上一集',
-                    click(){
+                    click() {
                         doAction('playPrev');
                     },
                 }, {
                     text: '下一集',
-                    click(){
+                    click() {
                         doAction('playNext');
                     },
                 },
@@ -55,7 +107,7 @@ var g_player = {
                 },*/
                 {
                     text: '关闭文件',
-                    click(){
+                    click() {
                         g_videoTabs.tabs.tab_remove()
                     },
                 },
@@ -73,24 +125,23 @@ var g_player = {
         return player
     },
 
-    players:{},
-
+    players: {},
     getPlayer(tab) {
-        if(!tab) tab = g_videoTabs.tabs.currentTab
+        if (!tab) tab = g_videoTabs.tabs.currentTab
         let player = this.players[tab]
-        let video = player.video
+        let video = player ? player.video : undefined
         return {
             video,
             player,
             setCurrentTime(time, play = true) {
                 video.currentTime = time
-                play && video.play()
+                this.pause(!play)
             },
             getURL(realURL = false) {
-                if(realURL && !video.src.startsWith('file:')){
+                if (realURL && !video.src.startsWith('file:')) {
                     return new Promise(reslove => g_rule.url_parse(g_videoTabs.getTabValue('url', tab), reslove))
                 }
-                return player.options.video.url
+                return decodeURI(player.options.video.url).replaceAll('%23', '#')
             },
             pause(paused) {
                 if (paused == undefined) paused = !video.paused
@@ -117,7 +168,27 @@ var g_player = {
                 }
             },
         }
-    }
+    },
+
+    coverTimers: {},
+    getCover(id, video, width, height) {
+        const clearTimer = () => {
+            let timer = this.coverTimers[id]
+            if (timer) {
+                clearInterval(timer)
+                delete this.coverTimers[id]
+            }
+        }
+        clearTimer()
+        return new Promise(reslove => {
+            this.coverTimers[id] = setInterval(async () => {
+                if (video.seeking === false) { // 视频跳转完成
+                    clearTimer()
+                    getImgBase64(video, width, height).then(img => reslove(img))
+                }
+            }, 20)
+        })
+    },
 
 }
 

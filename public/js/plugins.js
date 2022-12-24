@@ -52,17 +52,12 @@ let g_plugin = {
 
     // 获取所有插件
     getPlugins(all = false) {
-
-
-        // TODO 插件单独再某个库运行
-        let load = [];
-        for (let uuid in this.list) {
-            let plugin = this.list[uuid];
+        return Object.entries(this.list).map(([uuid, plugin]) => {
+            // TODO 插件依赖，在这里获取的话就要读取插件内容，还不如在插件里设置定时器比较方便？
             if (plugin.enable) {
-                load.push(this.getScipt(uuid))
+                return this.getScipt(uuid)
             }
-        }
-        return load
+        })
     },
 
     // 初始化
@@ -409,27 +404,33 @@ let g_plugin = {
     },
 
     // 注册事件
-    registerEvent(eventName, callback, primary = 1) {
+    registerEvent(eventName, callback, primary = 1, id = guid()) {
         let event = this.getEvent(eventName);
         if (event) {
-            event.listeners.push({
-                callback: callback,
-                primary: primary
-            });
+            event.listeners[id] = {
+                id,
+                callback,
+                primary
+            }
         }
-        return this
+        return id
     },
 
     // 取消注册事件
-    unregisterEvent(eventName) {
-        delete this.events[eventName];
+    unregisterEvent(id) {
+        for(let eventName in this.events){
+            let obj = this.events[eventName]
+            if(obj.listeners[id]){
+                delete obj.listeners[id]
+            }
+        }
     },
 
     // 获取事件
     getEvent(eventName, create = true) {
         if (create && !this.events[eventName]) {
             this.events[eventName] = {
-                listeners: [],
+                listeners: {},
             }
         }
         return this.events[eventName];
@@ -447,8 +448,8 @@ let g_plugin = {
                         data[k] = data[k].apply(data)
                     }
                 }
-                for (let listener of event.listeners.sort((a, b) => {
-                        return b.primary - a.primary;
+                for (let [id, listener] of Object.entries(event.listeners).sort((a, b) => {
+                        return b[1].primary - a[1].primary;
                     })) {
                     if (await listener.callback(data) === false) {
                         return reject();

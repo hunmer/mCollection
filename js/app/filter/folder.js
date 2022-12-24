@@ -127,7 +127,7 @@
            // radio name
            return `
 			<label class="form-selectgroup-item flex-fill">
-		      <input type="checkbox" value="${folder}" class="folder_btn form-selectgroup-input" ${attr}>
+		      <input type="checkbox" tabindex="-1" value="${folder}" class="folder_btn form-selectgroup-input" ${attr}>
 		      <div class="form-selectgroup-label d-flex align-items-center p-0">
 		        <div class="ms-1 me-2 pb-1">
 		          <span class="form-selectgroup-check"></span>

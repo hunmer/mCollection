@@ -7,7 +7,7 @@ var g_item = {
             name: 'datalist_item',
             selector: '.datalist-item',
             dataKey: 'data-md5',
-            html: g_menu.buildItems([{
+            items: [{
                 text: '新窗口打开',
                 action: 'item_open,new'
             }, {
@@ -31,7 +31,11 @@ var g_item = {
                 text: '打开目录',
                 icon: 'current-location',
                 action: 'item_location'
-            }]),
+            }, {
+                text: '发送到数据库',
+                icon: 'box',
+                action: 'dropdown_show,db_list,end-top'
+            }],
             onShow: async () => {
                 let trashed = await g_data.data_isTrashed(g_menu.key)
                 getEle('item_untrash').toggleClass('hide', !trashed)
@@ -42,48 +46,84 @@ var g_item = {
             }
         });
 
-        g_action.
-        registerAction(['item_open', 'item_trash', 'item_untrash', 'item_cover', 'item_print', 'item_location'], async (dom, action) => {
-            let md5 = g_menu.key
-            let div = g_menu.target
+        g_hotkey.hotkey_register('delete', { title: '删除', content: "doAction('item_trash')", type: 2 })
+        g_hotkey.hotkey_register('ctrl+keyt', { title: '标签', content: "getEle('detail_tags').click()", type: 2 })
+        g_dropdown.register('db_list', {
+            position: 'end-top',
+            offsetLeft: 5,
+            autoClose: 'true',
+            list() {
+                let list = g_db.toDropdown('item_moveTo')
+                delete list[g_db.current]
+                return list
+            },
+        }).init()
 
-            // let item = g_data.data_handle(md5)
-            switch (action[0]) {
-                case 'item_location':
-                    ipc_send('openFolder', getFilePath(await g_item.item_getVal('file', md5)))
-                    break;
-                case 'item_print':
-                    console.log(await g_data.data_get(md5))
-                    break;
-                case 'item_cover':
-                    g_ffmpeg.video_cover(md5, g_preview.video_get().currentTime)
-                    break;
-                case 'item_open':
-                    break;
-                    // TODO item动态添加
-                case 'item_untrash':
-                    if (await g_data.data_toTrash(md5, false)) {
-                        toast('成功复原', 'success')
-                        div.remove()
-                    }
-                    break;
-                case 'item_trash':
-                    if (await g_data.data_toTrash(md5)) {
-                        toast('成功移除', 'success')
-                        div.remove()
-                    }
-                    break;
+        g_action.
+        registerAction(['item_open', 'item_trash', 'item_untrash', 'item_cover', 'item_print', 'item_location', 'item_moveTo'], (dom, action) => {
+            let keys = self.selected_keys()
+            if (!keys.length) {
+                if (g_menu.key == undefined) return
+                keys = [g_menu.key]
             }
+
+            keys.forEach(async md5 => {
+                // let item = g_data.data_handle(md5)
+                let data = await g_data.data_get(md5)
+                let div = self.item_get(md5)
+                switch (action[0]) {
+                    case 'item_moveTo':
+                        let path = g_db.db_getVal(action[1], 'path')
+                        g_data.data_setWithDB(md5, data, path + '\\items.db').then(ret => {
+                            if (ret.changes) {
+                                // 移动文件并删除列表项目
+                                let from = g_db.getSaveTo(md5)
+                                let to = g_db.getSaveTo(md5, path)
+                                if (!nodejs.fs.moveSync(from, to,  { overwrite: true })) {
+                                    div.remove()
+                                    g_data.data_remove(md5)
+                                    return toast('移动成功', 'success')
+                                }
+                            }
+                            toast('移动失败', 'danger')
+                        })
+                        break;
+                    case 'item_location':
+                        ipc_send('openFolder', getFilePath(await self.item_getVal('file', data)))
+                        break;
+                    case 'item_print':
+                        console.log(data)
+                        break;
+                    case 'item_cover':
+                        g_ffmpeg.video_cover(md5, g_preview.video_get().currentTime)
+                        break;
+                    case 'item_open':
+                        break;
+                        // TODO item动态添加
+                    case 'item_untrash':
+                        if (await g_data.data_toTrash(md5, false)) {
+                            toast('成功复原', 'success')
+                            div.remove()
+                        }
+                        break;
+                    case 'item_trash':
+                        if (await g_data.data_toTrash(md5)) {
+                            toast('成功移除', 'success')
+                            div.remove()
+                        }
+                        break;
+                }
+            })
             g_menu.hideMenu('datalist_item')
         }).registerAction({
             item_preview: async (dom, action, e) => {
                 // if(e.ctrlKey) return
                 let par = $(dom).parents('[data-md5]')
                 let md5 = par.attr('data-md5')
-                let d = await g_data.data_get(md5)
-                g_action.do(null, 'item_unpreview')
-                g_preview.preview(dom, d)
-                par.addClass('item_previewing')
+                doAction('item_unpreview')
+                if (await g_preview.preview(dom, await g_data.data_get(md5)) !== false) {
+                    par.addClass('item_previewing')
+                }
             },
             range_view: dom => {
                 console.log(dom.value, dom.max)
@@ -123,14 +163,13 @@ var g_item = {
     // 更新选中显示
     selected_update() {
         g_detail.showList(this.selected_keys())
-
     },
 
     // 返回选中
     selected_list() {
         return $('.item_selected')
     },
-    
+
     // 返回选中md5
     selected_keys() {
         let r = []
@@ -151,6 +190,8 @@ var g_item = {
             let r = {}
             let path = g_db.getSaveTo(d.md5)
             let file = d.title + (d.ext != '' ? '.' + d.ext : '')
+
+            let t = getFileType(file)
             let isArr = Array.isArray(type)
             if (!isArr) type = [type]
             type.forEach(n => {
@@ -171,18 +212,22 @@ var g_item = {
 
                     case 'cover':
                         // TODO 不判断是否存在，而是用image加载错误事件
-                        v = path + 'cover.jpg'
-                        // TODO 判断是否文件类型
-                        // 图像的话就生成小图片
-                        // 判断云盘文件是否存在会卡顿
-                        // if (!nodejs.files.exists(v)) {
-                        //     // 网络封面 OR 本地图片
-                        //     v = d.json.cover
-                        //     if (isEmpty(v)) {
-                        //         v = './res/loading.gif' // 生成封面
-                        //         g_ffmpeg.video_cover(d.md5)
-                        //     }
-                        // }
+                        if (t == 'image') {
+                            v = path + file // 直接返回图片
+                        } else {
+                            v = path + 'cover.jpg'
+                            // TODO 判断是否文件类型
+                            // 图像的话就生成小图片
+                            // 判断云盘文件是否存在会卡顿
+                            if (!v.startsWith('Y') && !nodejs.files.exists(v)) {
+                                // 网络封面 OR 本地图片
+                                v = d.json.cover
+                                if (isEmpty(v)) {
+                                    v = './res/loading.gif' // 生成封面
+                                    g_ffmpeg.video_cover(d.md5)
+                                }
+                            }
+                        }
                         break;
                 }
                 r[n] = v
@@ -191,20 +236,20 @@ var g_item = {
         }
         if (typeof(md5) == 'object') {
             return fun(md5)
-        }else{
+        } else {
             return g_data.data_getData(md5).then(data => fun(data))
         }
     },
 
     // 统一更新封面方法，方便同时生成色卡
     item_setCover(md5, img) {
-        g_item.item_get(md5).find('.thumb').attr('src', img)
+        this.item_get(md5).find('.thumb').attr('src', img)
         // 顺手更新色卡
         getColors(img, { count: 9 }).then(colors => this.item_setColors(md5, colors))
     },
 
     item_setColors(md5, colors) {
-        g_data.date_setVal(md5, 'json.colors', colors.map(color => color.hex()))
+        g_data.date_setVal(md5, 'json.colors', colors.map(color => color.rgb()))
         g_detail.updateColumns('colors') // 更新色卡显示
     },
 
@@ -212,7 +257,6 @@ var g_item = {
     item_get(md5) {
         return $(`.datalist-item[data-md5="${md5}"]`)
     },
-
 }
 
 g_item.init()

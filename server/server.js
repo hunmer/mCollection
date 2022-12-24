@@ -16,11 +16,22 @@ wss.on('connection', function connection(ws) {
     ws.on('message', function incoming(msg) {
         // console.log(msg.toString())
         onMessage(JSON.parse(msg), ws);
-
     })
 });
 
+function getClients(type = 'client') {
+    let r = []
+    wss.clients.forEach(ws => {
+        if (ws._type = type) r.push(ws)
+    })
+    return r
+}
+
 var g_revices = {}
+
+function unregisterRevice(name){
+    delete g_revices[name]
+}
 
 function registerRevice(name, callback) {
     let isArr = Array.isArray(name)
@@ -36,13 +47,20 @@ function registerRevice(name, callback) {
 
 let db = require('./db.js')({ registerRevice, sendMsg })
 
+
 function onMessage(data, ws) {
     let d = data.data
     let type = data.type
+    // console.log(data)
     if (g_revices[type]) {
         return g_revices[type](d, ws);
     }
     switch (type) {
+        case 'exit':
+            return process.exit()
+        case 'connected':
+            ws._type = d.type
+            break;
         case 'task_add':
             switch (d.type) {
                 case 'copy':
@@ -92,11 +110,31 @@ function echoJson(res, data) {
 function sendMsg(client, type, data) {
     client.send(JSON.stringify({ type, data }));
 }
+
 registerApi('/', 'get', (req, res) => {
     var data = {
         "status": "success",
     };
     echoJson(res, data);
+});
+
+function waitFor(name, send) {
+    if(!send) send = {type: name}
+    return new Promise(reslove => {
+        let client = getClients()
+        if (!client.length) reslove({ status: 'error', msg: '客户端不在后台运行!' })
+        client[0].send(JSON.stringify(send))
+        registerRevice(name, data => {
+            unregisterRevice(name)
+            reslove(data)
+        })
+    })
+}
+
+registerApi('/tags', 'get', (req, res) => {
+    waitFor('tags').then(data => {
+        echoJson(res, data);
+    })
 });
 
 registerApi('/exit', 'get', (req, res) => {
@@ -118,6 +156,25 @@ registerApi('/api/application/info', 'get', (req, res) => {
     echoJson(res, data);
 });
 
+/* 查询导入结果 */
+var importResults = {}
+registerRevice('importResult', d => {
+     importResults[d.id] = d.added
+})
+registerApi('/importResult', 'get', (req, res) => {
+    let {id} = req.query
+    if(importResults[id] != undefined){
+        echoJson(res, {
+            msg: '导入完成',
+            added: importResults[id]
+        });
+    }else{
+        echoJson(res, {
+            msg: '任务查询中...',
+        });
+    }
+});
+
 registerApi('/api/item/addFromPaths', 'post', (req, res) => {
     // path 必填，本地文件路径
     // name 必填，欲添加图片名
@@ -125,41 +182,58 @@ registerApi('/api/item/addFromPaths', 'post', (req, res) => {
     // annotation 图片注释
     // tags 图片标签
     // folderId 如果带有此参数，图片将会添加到指定文件夹
-    echoJson(res, {
-        status: "success"
+    let client = getClients()
+    if (!client.length) return echoJson(res, { status: "error", msg: '客户端不在运行中...' });
+
+    let data = req.body
+    let items = (data.items || [data]).map(item => {
+        item.file = item.path
+        item.link = item.website
+        item.title = item.name
+        item.desc = item.annotation
+        delete item.path
+        return item
     });
-    importData(req.body);
+    let id = files.guid()
+    sendMsg(client[0], 'data_import', {items, id})
+    echoJson(res, {
+        status: "success",
+        msg: '成功添加' + items.length + '个文件...',
+        id
+    });
 })
 
 
 // 解析来自http的数据
 function importData(data) {
     let r = []
-    let lists = data.items || [data];
-    lists.forEach(item => {
-        let file = item.path
-        let { birthtimeMs, isFile, size } = files.stat(file)
-        if (isFile) {
-            let {ext, name} = files.splitName(file)
-            r.push({
-                file: file,
-                folders: data.folders || [],
-                title: name,
-                ext: ext,
-                tags: item.tags || [],
-                desc: item.annotation || '',
-                md5: files.getFileMd5(file),
-                date: new Date().getTime(),
-                birthtime: birthtimeMs,
-                score: 0,
-                deleted: 0,
-                size,
-                json: {
 
-                }
-            })
-        }
-    })
-    db.data.data_import(r)
+    // lists.forEach(item => {
+    //     let file = item.path
+    //     let { birthtimeMs, isFile, size } = files.stat(file)
+    //     if (isFile) {
+    //         let {ext, name} = files.splitName(file)
+    //         r.push({
+    //             file,
+    //             folders: data.folders || [],
+    //             title: name,
+    //             ext,
+    //             tags: item.tags || [],
+    //             desc: item.annotation || '',
+    //             md5: files.getFileMd5(file),
+    //             date: new Date().getTime(),
+    //             birthtime: birthtimeMs,
+    //             score: 0,
+    //             deleted: 0,
+    //             size,
+    //             json: {
+
+    //             }
+    //         })
+    //     }
+    // })
+    // db.data.data_import(r)
 }
 
+
+console.log('服务器启动成功')

@@ -7,6 +7,13 @@ let g_cupfox = {
                     let val = dom.value
                     if(!isEmpty(val)) self.search(val)
                 }
+            },
+            link_parse(){
+                prompt(getClipboard(), {
+                    title: '输入播放列表URL'
+                }).then(url => {
+                    if(!isEmpty(url)) g_playlist.parse_url(url)
+                })
             }
         })
 
@@ -14,12 +21,15 @@ let g_cupfox = {
     },
 
     search(keyword){
-        $('#cb_search').html('<div class="w-full text-center loading"><div class="spinner-grow text-center text-blue mt-3" role="status"></div></div>')
-        fetch(`https://api.cupfox.app/api/v2/search/?text=${keyword}&type=0&from=0&size=50&token=`+this.sha1(keyword+'URBBRGROUN')).then(resp => {
-            resp.json().then(json => {
-                this.parse(json)
+        $('#cb_search').html('')
+        setConfig('cb_lastSearch', keyword)
+        for(let i = 0; i < 2; i++){
+            fetch(`https://api.cupfox.app/api/v2/search/?text=${keyword}&type=0&from=${i * 20}&size=20&token=`+this.sha1(keyword+'URBBRGROUN')).then(resp => {
+                resp.json().then(json => {
+                    this.parse(json)
+                })
             })
-        })
+        }
     },
 
     parse(data){
@@ -27,7 +37,7 @@ let g_cupfox = {
         let h = ''
         data.resources.forEach(item => {
             h += `
-                <div class="col-6" data-action="playlist_loadURL,${item.url}">
+                <div class="col-6" data-target="${item.url}" data-action="playlist_loadURL" data-contenx="playlist_openURL">
                     <div class="row align-items-center p-2">
                       <a href="#" class="col-auto">
                         <span class="avatar" style="background-image: url(${item.icon})">
@@ -50,11 +60,7 @@ let g_cupfox = {
                 </div>
             `
         })
-        $('#cb_search').html(h ? `
-            <div class="row g-3">${h}</div>
-            ` : `
-            <h4 class="text-center mt-3">没有任何搜素结果...</h4>
-        `)
+        h && $('#cb_search').append(h)
     },
 }
 g_detailTabs.register('cupfox', {
@@ -70,10 +76,10 @@ g_detailTabs.register('cupfox', {
         id: 'cupfox',
         title: '<i class="ti ti-search fs-2"></i>',
         html: `
-            <div class="input-group position-relative">
+            <div class="input-group position-relative" style="z-index: 1">
                 <i class="ti ti-search fs-2 position-absolute" style="left: 10px;top: 8px;z-index: 999;"></i>
-                <input style="padding-left: 35px;" type="text" class="form-control" placeholder="搜索..." data-keydown="cb_search" value="少年派">
-                <button type="button" class="btn" data-action="books_add"><i class="ti ti-plus fs-2"></i></button>
+                <input style="padding-left: 35px;" type="text" class="form-control" placeholder="搜索..." data-keydown="cb_search" value="${getConfig('cb_lastSearch', '')}">
+                <button type="button" class="btn" data-action="link_parse"><i class="ti ti-link fs-2"></i></button>
                 <button data-bs-toggle="dropdown" type="button" class="btn dropdown-toggle dropdown-toggle-split" aria-expanded="false"></button>
                 <div class="dropdown-menu dropdown-menu-end" style="">
                    <a class="dropdown-item" href="#" data-action="books_upload">
@@ -81,8 +87,7 @@ g_detailTabs.register('cupfox', {
                   </a>
                 </div>
             </div>
-            <div class="overflow-y-auto h-full" style="padding-bottom: 50px;" id="cb_search">
-               <h4 class="mt-3 text-center">输入关键词开始搜素...</h4>
+            <div class="overflow-y-auto h-full row g-3" style="padding-bottom: 200px;" id="cb_search">
             </div>
             `
     },

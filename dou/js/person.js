@@ -17,6 +17,10 @@ var g_person = {
         return getConfig('user')
     },
 
+    me(){
+        return this.get().name
+    },
+
     set(data) {
         delete data.type
         setConfig('user', data)

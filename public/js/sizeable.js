@@ -222,8 +222,9 @@ var g_sizeable = {
     restore(id) {
         // 还原上次位置
         let memory = this.data[id]
-        if (this.inited[id] != memory) {
-            this.inited[id] = memory
+        if(memory){
+        // if (this.inited[id] != memory) {
+            // this.inited[id] = memory
             for (let [k, v] of Object.entries(memory)) {
                 this.instace[id].opts.changed(k, v)
             }

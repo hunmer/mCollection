@@ -63,3 +63,8 @@ g_clipboard.register({
         })
     }
 })
+
+
+function getClipboardText() {
+    return nodejs.clipboard ? nodejs.clipboard.readText() : '';
+}

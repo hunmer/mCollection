@@ -64,9 +64,9 @@ const files = {
         return size + unitArr[index];
     },
     getAppData: () => process.env.APPDATA || (process.platform == 'darwin' ? process.env.HOME + '/Library/Preferences' : process.env.HOME + "/.local/share"),
-    getFileMd5: (file) => {
+    getFileMd5: (file, type = 'md5') => {
         const buffer = fs.readFileSync(file);
-        const hash = crypto.createHash('md5');
+        const hash = crypto.createHash(type);
         hash.update(buffer, 'utf8');
         return hash.digest('hex');
     },
@@ -105,7 +105,7 @@ const files = {
         return true
     },
     readFile: (file) => {
-        if(fs.existsSync(file)){
+        if (fs.existsSync(file)) {
             return fs.readFileSync(file)
         }
     },
@@ -134,23 +134,26 @@ const files = {
                 files.searchDirFiles(path, list, fileExts, C - 1);
                 return;
             }
-            for (var i = 0; i < fileExts.length; i++) {
-                if (fileName.endsWith(fileExts[i])) {
-                    list.push(path);
-                    return;
-                }
+            if(!fileExts.length || fileExts.find(ext => fileName.endsWith(ext))){
+                list.push(path);
             }
         });
     },
     dirFiles(dirs, fileExts, callback) {
-        let list = [];
-        if(!Array.isArray(dirs)) dirs = [dirs]
-        dirs.forEach(dir => {
-            if(files.isDir(dir)){
-                this.searchDirFiles(dir, list, fileExts)
+        return new Promise(reslove => {
+            let list = [];
+            if (!Array.isArray(dirs)) dirs = [dirs]
+            dirs.forEach(dir => {
+                if (files.isDir(dir)) {
+                    this.searchDirFiles(dir, list, fileExts)
+                }
+            })
+            if (callback) {
+                callback(list)
+            } else {
+                reslove(list)
             }
         })
-        callback(list)
     },
     items: (dir) => {
         var r = {
@@ -220,9 +223,16 @@ const files = {
     isEmptyDir: (dir) => fs.readdirSync(dir).length == 0,
     removeDir: (dir) => fs.rmSync(dir, { recursive: true, force: true }),
     stat: (file) => files.exists(file) && fs.statSync(file),
+    guid() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = Math.random() * 16 | 0,
+                v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
 }
 
-function getImageType(str){
+function getImageType(str) {
     var reg = /\.(png|jpg|gif|jpeg|webp)$/;
     return str.match(reg)[1];
 }

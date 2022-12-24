@@ -46,12 +46,12 @@ class Progress {
     getContent() {
         return $('#_progress_' + this.id)
     }
-    setSloved(k, b = true) {
+    setSloved(k, b = true, text = '') {
         let i = this.sloved.indexOf(k)
         if (i == -1) {
             if (b) {
                 this.sloved.push(k)
-                this.addLog(this.opts.logText.replace('%%s%%', k))
+                this.addLog((text || this.opts.logText).replace('%%s%%', k))
             }
         } else
         if (!b) {

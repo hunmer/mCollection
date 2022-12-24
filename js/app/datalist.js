@@ -9,8 +9,8 @@ var g_datalist = {
             item: d => {
                 let r = Object.values(getConfig(replaceArr(['%name', '%desc', '%duration', '%ext'], 'show,')))
                 return `
-                 <div class="datalist-item col-xs-12 col-sm-6 col-md-4 col-lg-4 col-xl-3 col-xxl-2" data-action="item_click" data-dbclick="item_dbclick" {md5} {dargable}>
-                    <div class="card card-sm h-full position-relative">
+                 <div class="datalist-item col-xs-12 col-sm-6 col-md-4 col-lg-4 col-xl-3  p-0 m-0 top-0 col-xxl-2" data-mousedown="item_click" data-dbclick="item_dbclick" {md5} {dargable}>
+                    <div class="card card-sm h-full position-relative justify-content-center">
                       ${OR(r[3], `<span class="badge top-5 start-5 position-absolute w-fit">${getExtName(d.file)}</span>`)}
                       <a class="d-block ">
                         <img src="./res/loading.gif" data-src="${d.cover}" class="thumb card-img-top lazyload" {preview}>
@@ -34,7 +34,7 @@ var g_datalist = {
             }
         },
 
-        list: {
+        table: {
             container: () => {
                 let r = Object.values(getConfig(replaceArr(['%name', '%desc', '%ext', '%duration'], 'show,')))
                 return `
@@ -58,7 +58,7 @@ var g_datalist = {
             item: d => {
                 let r = Object.values(getConfig(replaceArr(['%name', '%desc', '%duration', '%ext'], 'show,')))
                 return `
-                    <tr data-action="item_click" data-dbclick="item_dbclick" {md5} {dargable}>
+                    <tr data-mousedown="item_click" data-dbclick="item_dbclick" {md5} {dargable}>
                       <th><img src="${d.cover}" class="thumb" {preview}></th>
                       ${OR(r[0], `<td class="text-muted">${d.title}</td>`)}
                       ${OR(r[1], `<td class="text-muted">${d.desc}</td>`)}
@@ -67,30 +67,63 @@ var g_datalist = {
                     </tr>
                 `
             }
-        }
+        },
+
+          list: {
+            container: () => {
+                return `
+                 <div class="datalist list-group list-group-flush overflow-y-auto" style="height: calc(100vh - 100px);">
+                  </div>
+                `
+            },
+            item: d => {
+                return `
+                     <div class="list-group-item" data-mousedown="item_click" data-dbclick="item_dbclick" {md5} {dargable}>
+                      <div class="row">
+                        <div class="col-auto">
+                          <a href="#" tabindex="-1">
+                            <img class="avatar thumb" src="${d.cover}" {preview}>
+                          </a>
+                        </div>
+                        <div class="col text-truncate">
+                          <a href="#" data-action="files_load" class="text-body d-block">${d.title}</a>
+                          <div class="text-muted text-truncate mt-n1">${d.desc} ${d.json.duration ? getTime(d.json.duration) : ''}</div>
+                        </div>
+                      </div>
+                    </div>
+                `
+            }
+        },
+
+
     },
 
     // 新建视窗
     rule_new(data) {
-        let query = data.query || 'SELECT * FROM {table} {rule} LIMIT {limit} OFFSET {start};'
-        let table = data.table || 'videos'
-
+        let {query, table, sort, rule, title, value} = data = Object.assign({
+            query: 'SELECT md5 FROM {table} {rule}',
+            table: 'videos',
+            sort: 'date',
+            rule: ''
+        }, data)
         getConfig('oneTab') && this.tabs.clear()
+
         this.tabs.try_add(function(v) { // 不重复打开
-            return v[1].data.query == query && v[1].data.table == table && v[1].data.rule == data.rule
+            return v[1].data.query == query && v[1].data.table == table && v[1].data.rule == rule
         }, {
-            title: data.title,
+            title,
             data: {
                 view: 'default', // 展示样式
-                sort: 'date', // 排序标记
-                value: data.value, // 目标参数，{type: folder, value: 文件夹} 
+                sort, // 排序标记
+                value, // 目标参数，{type: folder, value: 文件夹} 
                 page: 0, // 当前页数
                 cnt: 0, // ?展示数量
-                pagePre: 20, // 每页展示
-                table: table, // 目标数据库
-                query: query, // 固定查找参数
-                rule: data.rule, // 条件
-                items: [], // 加载过的md5列表
+                pagePre: 40, // 每页展示
+                table, // 目标数据库
+                query, // 固定查找参数
+                rule, // 条件
+                items: [], // 所有的md5列表？
+                loaded: [], // 加载过的md5列表
             },
         })
     },
@@ -147,6 +180,7 @@ var g_datalist = {
         return this.views[view || 'default'].item(d)
     },
 
+
     onScroll(dom) {
         let scrollTop = dom.scrollTop;
         if (scrollTop == 0) {
@@ -161,7 +195,6 @@ var g_datalist = {
     init() {
         const self = this
 
-        
         g_tabs.init({
             saveData: (name, data) =>  g_db.db_saveJSON('tabs_' + name, data),
             getData: name =>  g_db.db_readJSON('tabs_' + name, {}),
@@ -175,7 +208,7 @@ var g_datalist = {
                         <div id="datalist_actions" class="d-flex col flex-row-reverse"></div>
                     </div>
 
-                    <div id="itemlist_tabs" class="overflow-y-auto border-unset" style="padding-bottom: 100px;"></div>
+                    <div id="itemlist_tabs"  data-out="item_unpreview" data-outfor="item_preview" class="overflow-y-auto border-unset" style="padding-bottom: 100px;"></div>
                     <div class="position-absolute bottom-0 w-full border-top p-2 card" style="height: 50px">
                         <div class="d-flex align-items-center mr-2 hide1" id="bar_import">
                             <div class="flex-grow-1 ">
@@ -203,10 +236,6 @@ var g_datalist = {
             onHide: function() {},
         }).show('datalist')
 
-        // g_action.registerAction({
-
-        // })
-
         self.tabs = g_tabs.register('datalist', {
             target: '#itemlist_tabs',
             parseContent: (k, v) => {
@@ -220,33 +249,34 @@ var g_datalist = {
                 if (!div.find('.datalist-item').length) { // 没有数据
                     // 初始化范围选择
                     // todo 优化选择
-                    if (self.ds) self.ds.stop()
-                    if(typeof(DragSelect) != 'undefined'){
-                           self.ds = new DragSelect({
-                            selectables: [],
-                            area: div.find('.datalist-items')[0],
-                            draggability: false,
-                            customStyles: true,
-                            overflowTolerance: { x: 50, y: 100 }, // xy触发自动滚动的范围
-                            multiSelectMode: true,
-                            multiSelectKeys: ['Control'],
-                            selectedClass: 'item_selected',
-                            // hoverClass: 'hovered',
-                        });
+                    
+                    // if (self.ds) self.ds.stop()
+                    // if(typeof(DragSelect) != 'undefined'){
+                    //        self.ds = new DragSelect({
+                    //         selectables: [],
+                    //         area: div.find('.datalist-items')[0],
+                    //         draggability: false,
+                    //         customStyles: true,
+                    //         overflowTolerance: { x: 50, y: 100 }, // xy触发自动滚动的范围
+                    //         multiSelectMode: true,
+                    //         multiSelectKeys: ['Control'],
+                    //         selectedClass: 'item_selected',
+                    //         // hoverClass: 'hovered',
+                    //     });
 
-                        self.ds.subscribe('callback', ({ items }) => {
-                            g_item.selected_update()
-                        })
+                    //     self.ds.subscribe('callback', ({ items }) => {
+                    //         g_item.selected_update()
+                    //     })
 
-                        self.ds.subscribe('dragstart', ({ items }) => {
-                            if (items.length) {
-                                if (items[0].dataset.file) { // 跟拖拽文件冲突
-                                    self.ds.break() // 取消
-                                }
-                            }
-                        })
-                    }
-                    self.page_toPage(tab, 0, 0)
+                    //     self.ds.subscribe('dragstart', ({ items }) => {
+                    //         if (items.length) {
+                    //             if (items[0].dataset.file) { // 跟拖拽文件冲突
+                    //                 self.ds.break() // 取消
+                    //             }
+                    //         }
+                    //     })
+                    // }
+                    self.page_toPage(tab, 0)
                 }
             },
             onHide: tab => {
@@ -271,7 +301,7 @@ var g_datalist = {
         d.file =  g_item.item_getVal('file', d)
         return (h || this.get_html(d, view)).
         replace('{dargable}', !d.file.startsWith('http') ? ' data-file="' + d.file + '" draggable="true"' : '').
-        replace('{preview}', ['mp4', 'mp3', 'wav', 'ogg'].includes(getExtName(d.file)) ? 'data-hover="item_preview" data-hoverTime="300"' : '').
+        replace('{preview}', (true || ['mp4', 'mp3', 'wav', 'ogg', 'm4a'].includes(getExtName(d.file))) ? 'data-hover="item_preview" data-hoverTime="300"' : '').
         replace('{md5}', `data-md5="${md5}"`).
         replace('{cover}', d.cover).
         replace('{file}', d.file)
@@ -282,30 +312,36 @@ var g_datalist = {
         return this.page_toPage(tab, 1)
     },
 
-    tab_clear() {
-
+    tab_clearItems(tab) {
+        this.tab_getContent(tab).html('')
     },
 
     // 到指定页数
-    async page_toPage(tab, add = 0, page) {
+    async page_toPage(tab, add = 0) {
         let data = this.tab_method('tab_getValue', tab).data
         // 查询参数
-        data.page = (page || data.page) + add
-
+        data.page += add
         let start = data.page * data.pagePre;
         let query = data.query.
         replace('{rule}', data.rule).
-        replace('{table}', data.table).
-        replace('{limit}', data.pagePre).
-        replace('{start}', start)
+        replace('{table}', data.table)
 
-        if (query.toLowerCase().indexOf('order by') == -1) { // 没排序
-            query = query.replace('LIMIT', `ORDER BY ${data.sort} ${data.asc ? 'asc' : 'desc'} LIMIT `)
+        if(data.items.length == 0){ // 初次加载
+            if(query.toLowerCase().indexOf('order by') == -1) { // 没排序
+                if(data.sort != 'random'){ // TODO 自带的排序方式
+                    query += ` ORDER BY ${data.sort} ${getConfig('sort_reverse') ? 'desc' : 'asc'}`
+                }
+                // ？ 还是说直接对items进行排序？？？ 
+            }
+            data.items = await g_data.data_getResults(query)
+            // 在这里进行初排序？SQLITE排序的方法好像很有限...
+            // 但是如果要更多排序的话，可能要暴力遍历了？？？
+            if(data.sort == 'random'){
+                data.items = data.items.sort(() => 0.5 - Math.random())
+            }
         }
-
-        let items = await g_data.data_getResults(query)
-        // console.log(JSON.stringify(items))
-        console.log(items)
+        let items = await Promise.all(data.items.slice(start, data.pagePre + start).map(({md5}) => g_data.data_getData(md5)))
+        // let items = await g_data.data_getResults(query)
 
         // 继续上次的搜索结果？
         // 储存md5列表
@@ -317,33 +353,50 @@ var g_datalist = {
         //         data.items.push(item.md5)
         //     }
         // })
-
         data.hasMore = (items.length || 0) >= data.pagePre
-
         this.tab_loadItems(items, tab)
         setTimeout(() => {
-            if (data.hasMore && !isScroll(g_datalist.content_get().find('.datalist-items')[0]).scrollY) {
+            if (data.hasMore && !isScroll(this.tab_getContent(tab)[0]).scrollY) {
                 this.page_nextPage();
             }
         }, 500);
     },
 
+    tab_refresh(tab){
+        this.tab_setItems([], tab)
+    },
+
+    tab_setItems(items, tab){
+        let data = this.tab_method('tab_getValue', tab).data
+        data.items = items
+        data.loaded = []
+        data.page = -1
+        this.tab_clearItems(tab)
+        this.page_nextPage()
+    },
+
+    tab_getContent(tab){
+        return this.content_get(tab).find('.datalist-items')
+    },
+
     // 指定tab加载items
-    tab_loadItems(items, tab, insert = 'appendTo') {
+    tab_loadItems(items, tab, insert) {
         let self = this
+        if(!insert) insert = 'appendTo'
+
         let tab_data = this.tab_method('tab_getValue', tab)
         if (!tab_data) {
             // 当前没有tab
             return
         }
+        
         let h = ``;
         let data = tab_data.data
-        let target = this.content_get(tab).find('.datalist-items')
+        let target = this.tab_getContent(tab)
         items.forEach(item => {
             let data = g_data.data_parse(item)
             h += this.item_parse(data, '', data.view)
         })
-        // console.log(items)
 
         target.find('.nomore').remove()
         if (!h) {
@@ -355,7 +408,7 @@ var g_datalist = {
         }
         let div = $(h)
         div[insert](target).find('.lazyload').lazyload()
-        target.length && self.ds.setSelectables(target[0].querySelectorAll('.datalist-item'))
+        // target.length && self.ds.setSelectables(target[0].querySelectorAll('.datalist-item'))
         g_setting.apply('itemWidth') // 更新宽度
 
     },

@@ -48,6 +48,9 @@
      g_setting.onSetConfig({
          dataPath: path => {
              location.reload()
+         },
+         bg(url) {
+             setBg(url)
          }
      })
 
@@ -59,13 +62,25 @@
                  autoPlay: {
                      title: '自动播放视频',
                      type: 'switch',
-                     value: getConfig('autoPlay'),
+                     value: () => getConfig('autoPlay'),
                  },
                  blurPause: {
                      title: '后台暂停播放',
                      type: 'switch',
-                     value: getConfig('blurPause'),
+                     value: () => getConfig('blurPause'),
                  },
+                 bg: {
+                     title: '自定义背景',
+                     value: () => getConfig('bg'),
+                     type: 'file_chooser',
+                     opts: {
+                         title: '选择背景图片',
+                         properties: ['openFile'],
+                         filters: [
+                             { name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif'] },
+                         ],
+                     },
+                 }
              }
          },
          users: {
@@ -75,7 +90,7 @@
                  dataPath: {
                      title: '数据目录',
                      type: 'file_chooser',
-                     value: getConfig('dataPath'),
+                     value: () => getConfig('dataPath'),
                      opts: {
                          title: '选择数据目录',
                          properties: ['openDirectory'],
@@ -89,7 +104,7 @@
              elements: {
                  proxy: {
                      title: '网络代理',
-                     value: getConfig('proxy'),
+                     value: () => getConfig('proxy'),
                      html: `
                      <div class="mt-3">
                         <div class="form-label {required}">{title}</div>
@@ -146,6 +161,48 @@
          },
      }
      g_setting.getConfig('darkMode') && g_setting.call('darkMode', true)
+     g_setting.apply('bg')
      // g_action.do(null, 'settings,general')
  });
 
+
+// 本地文件转FILE://
+function formatBackgroundURL(img) {
+    if (!img.startsWith('.')) {
+        img = 'file:\\' + img
+    }
+    return replaceAll_once(img, '\\', '\\\\').replaceAll('#', '%23').replaceAll(' ', '%20')
+}
+
+ function setBg(bg) {
+     g_style.addStyle('bg', bg ? `
+        body:not(.theme-dark) {
+            margin: 0;
+            padding: 0;
+            background-image: url(${formatBackgroundURL(bg)});
+            background-size: 100% 100%;
+            /* backdrop-filter: blur(2px); */
+        }
+
+        * {
+            border: 0 !important;
+        }
+
+        .modal-content .modal-body {
+          background-color: rgba(255, 255, 255, .8);
+        }
+
+        label, .form-label, th {
+          background-color: rgba(255, 255, 255, .3) !important;
+        }
+
+        :root {
+           --tblr-bg-surface:  rgba(255, 255, 255, .1);
+           --tblr-active-bg:  rgba(255, 255, 255, .1);
+           --tblr-muted:  rgba(255, 255, 255, .8);
+           --color-bg-default: rgba(0, 0, 0, .3);
+        }
+
+
+    ` : '')
+ }

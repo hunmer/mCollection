@@ -16,9 +16,9 @@ g_border.init({
 
 			<div id="traffic">
 				<div class="traffic_icons d-flex align-items-center m-0" style="font-size: 1.2rem;top: 2px;">
-					<input data-input="range_view" type="range" class="form-range pe-2 me-2 border-end" value="0" min="100" max="500" step="20" style="max-width: 125px;">
+					<input tabindex="-1" data-input="range_view" type="range" class="form-range pe-2 me-2 border-end" value="0" min="100" max="500" step="20" style="max-width: 125px;">
 					<div class="input-group-sm me-2">
-                      <input type="text" value="" class="form-control form-control-rounded" placeholder="搜索">
+                      <input tabindex="-1" type="text" value="" class="form-control form-control-rounded" placeholder="搜索">
                     </div>
 	            	<div data-action="sidebar_toggle,right"><i class="ti ti-layout-sidebar-right"></i></div>
 	            	<div data-action="darkMode" ><i class="ti ti-moon"></i></div>

@@ -19,19 +19,18 @@ var g_style = {
 	addStyle(name, style){
 		this.remove(name);
 		if(!isEmpty(style)){
-			let css = $(`<style title="${name}">${style}</style>`).appendTo('head')
+			let css = $(`<style alt="${name}">${style}</style>`).appendTo('html')
 			this.list[name] = css;
 			return css;
 		}
 	},
 	getSheet(name){
 		for(let sheet of document.styleSheets){
-			if(sheet.title == name){
+			if(sheet.alt == name){
 				return sheet
 			}
 		}
 	},
-
 	getStyle(name, selector){
 		for(let rule of g_style.getSheet(name).cssRules){
 			if(rule.selectorText == selector){

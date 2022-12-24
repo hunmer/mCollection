@@ -1,6 +1,6 @@
 var g_toast = {
     init() {
-
+        this.audio = $('<audio class="hide" autoplay></audio>').appendTo('body')[0]
     },
     list: {},
 
@@ -95,3 +95,10 @@ g_toast.register('default', {
 function toast(title, level, timeout){
     g_toast.toast(title, '提示', level, timeout)
 }
+
+function soundTip(type){
+    let arr = {danger: 'res/error.mp3', success: 'res/done.mp3', primary: 'res/alert.mp3'}
+    let file = arr[type] || type
+    g_toast.audio.src = file
+}
+

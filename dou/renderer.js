@@ -1,6 +1,6 @@
 const { app, ipcRenderer, clipboard, shell } = require('electron');
 const remote = require('@electron/remote');
-const { getCurrentWindow, getCurrentWebContents, webContents, session } = remote
+const { getCurrentWindow, getCurrentWebContents, webContents, session, net } = remote
 const files = require('../file.js')
 const fs = require('fs-extra')
 const path = require('path')
@@ -17,34 +17,9 @@ win.webContents.on('did-attach-webview', (event, webContents) => {
     });
 });
 
-
-
-// let proxyServer  = "PROXY 127.0.0.1:4780; SOCKS5 127.0.0.1:4780;";
-// let content = `
-//     let blocked      = ["ip138.com"];
-//     let proxyServer  = "PROXY 114.238.85.125:16372;";
-//     function FindProxyForURL(url, host) {
-//         let shost = host.split(".").reverse();
-//         shost = shost[1] + "." + shost[0];
-//         for(let i = 0; i < blocked.length; i++) {
-//             if( shost == blocked[i] ) return proxyServer;
-//         }
-//         return "DIRECT";
-//     }
-// `;
-// _webContent.session
-//     .setProxy({
-//     pacScript: 'data:text/plain;base64,' + Buffer.from(content, 'utf8').toString('base64')
-//         // proxyRules: "http://127.0.0.1:4780",
-//       })
-//     .then(() => {
-//         console.log('ok')
-//     }).catch((err) => console.error(err));
-
 ipcRenderer.on('method', (event, args) => {
     doAction(args);
 });
-
 
 ipcRenderer.on('log', (event, args) => {
     console.log(args)
@@ -81,8 +56,11 @@ window.nodejs = {
     request: require('request'),
     webContents,
     fs,
+    net,
+    os: require('os'),
     path,
     files,
+    clipboard,
     cli: require('../cli.js'),
     method: function(data) {
         console.log(data);
@@ -134,7 +112,6 @@ function downloadFile(opts) {
         onError: () => {},
         // proxy: 'http://127.0.0.1:1080',
     }, opts.opts || {}))
-    console.log(opts);
 
     let fileBuff = [];
     req.on('data', function(chunk) {
@@ -165,6 +142,31 @@ function downloadFile(opts) {
     });
 }
 
-function getClipboardText() {
-    return clipboard ? clipboard.readText() : '';
+
+function notifiMsg(title, opts) {
+    let obj = new Notification(title, {
+        body: opts.text || '',
+        icon: opts.icon || './favicon.png',
+        silent: opts.slient,
+    });
+    obj.onclick = function(e) {
+        opts.onclick && opts.onclick(e);
+    }
+    obj.onclose = function(e) {
+        opts.onclose && opts.onclose(e);
+    }
+    obj.onshow = function(e) {
+        opts.onshow && opts.onshow(e);
+    }
+    return obj;
 }
+
+function showMessage(title, text) {
+    notifiMsg(title, {
+        text,
+        onclick(){
+            ipc_send('show');
+        }
+    });
+}
+

@@ -25,17 +25,28 @@
             text: '编辑',
             action: 'account_item_edit'
         }, {
+            icon: 'home-2',
+            text: '主页',
+            action: 'account_item_homepage'
+        }, {
             icon: 'trash',
             text: '删除',
             class: 'text-danger',
             action: 'account_item_delete'
-        }]
+        }],
+        onShow(key){
+            let d = self.get(g_menu.key)
+            getEle('account_item_homepage').toggleClass('hide', !d.uid)
+        }
     });
-    
-    g_action.registerAction(['account_item_delete', 'account_item_edit'], (dom, action) => {
+
+    g_action.registerAction(['account_item_delete', 'account_item_edit', 'account_item_homepage'], (dom, action) => {
         let id = g_menu.key
         let d = self.get(id)
         switch (action[0]) {
+            case 'account_item_homepage':
+                g_user.user_homepage(d.uid)
+                break;
             case 'account_item_edit':
                 self.account_edit(id)
                 break;
@@ -74,7 +85,7 @@
 
             self.getIcon('', '.active').removeClass('active')
             let badge = self.getIcon(id).addClass('active').find('.badge')
-            if(!badge.hasClass('bg-success')){
+            if (!badge.hasClass('bg-success')) {
                 // 初次激活
                 g_browser.group_getTabs(id)[0].click()
             }
@@ -82,8 +93,8 @@
             self.getContent('', '.show1').removeClass('show1')
             self.getContent(id).addClass('show1')
             $('._content.active').removeClass('active')
-            
-           getEle({site: id}, '._content').addClass('active')
+
+            getEle({ site: id }, '._content').addClass('active')
         },
         account_unload() {
 
@@ -93,7 +104,7 @@
                 title: '',
                 desc: '',
                 icon: 'res/default.jpg',
-                 uid: ''
+                uid: ''
             }
             g_form.confirm('account_edit', {
                 elements: {
@@ -129,8 +140,8 @@
                         prompt('', { title: '输入抖音主页链接或者ID' }).then(s => {
                             if (!isEmpty(s)) {
                                 g_api.douyin_parseUser(s, d => {
-                                    let { icon, name: title, desc, sec_uid: uid} = d
-                                   g_form.setElementVal('account_edit', {icon, title, desc, uid})
+                                    let { icon, name: title, desc, sec_uid: uid } = d
+                                    g_form.setElementVal('account_edit', { icon, title, desc, uid })
                                 })
                             }
                         })

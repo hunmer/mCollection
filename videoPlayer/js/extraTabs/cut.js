@@ -1,67 +1,33 @@
-g_extraTabs.register('cut', {
-    index: 1,
-    onTabChanged: old => {
-
-    },
-    onVideoEvent: (type, { tab }) => {
-        if (type == 'show') {
-
-        }
-    },
-    tab: {
-        id: 'cut',
-        title: '<i class="ti ti-cut fs-2"></i>',
-        html: `
-		    <div class="row overflow-y-auto h-full" style="padding-bottom: 50px;">
-		        <div class="col-3 p-4" id="cut_start">
-		            <img src="res/default.jpg" class="w-full shadow border rounded-3">
-		            <input class="form-control mt-1" placeholder="起点">
-		        </div>
-		        <div class="col-3 p-4" id="cut_end">
-		            <img src="res/default.jpg" class="w-full shadow border rounded-3">
-		            <input class="form-control mt-1" placeholder="终点">
-		        </div>
-		        <div class="col p-4">
-		           
-		        </div>
-		    </div>
-		    `
-    },
-}, {
+var g_cut = {
     init() {
         const self = this
-        window.g_cut = self
-
-        const onMouseWheel = (type, e) => {
-            let video = g_player.getPlayer().video
-            if (video) {
-                e = e.originalEvent
-                let duration = video.duration
-                if (!isNaN(duration)) {
-                    let key = g_hotkey.getInputCode(e, 'key')
-                    let add = 1 // eval(opts[key]) ||
-                    if (add < 1) add = 1;
-                    self.addTime(type, e.deltaY > 0 ? 0 - add : add)
-                    clearEventBubble(e);
-                }
-            }
+        let getPlayer = () => g_player.getPlayer()
+        let bindEvent = type => {
+            $('#cut_' + type + ' input')
+            .on('mousewheel', e => {
+                g_player.onMouseWheel(e, getPlayer().video, 0.25).then(add => self.addTime(type, add))
+            })
+            .on('focus', () => {
+               // getPlayer().tryPause()
+               self.jumpTo(type, false)
+            })
+            .on('blur', () => setTimeout(() => getPlayer().tryPlay(), 200)) // 避免直接点击video发生冲突
         }
-
-        $('#cut_start input').on('mousewheel', e => onMouseWheel('start', e))
-        $('#cut_end input').on('mousewheel', e => onMouseWheel('end', e))
+        ['start', 'end'].forEach(type => bindEvent(type))
 
         g_hotkey.hotkey_register({
-            'alt+digit1': {
+            // 'alt+digit1': {
+            'digit1': {
                 title: '设置裁剪起点',
                 content: "doAction('cut_setStart')",
                 type: 2,
             },
-            'alt+digit2': {
+            'digit2': {
                 title: '设置裁剪终点',
                 content: "doAction('cut_setEnd')",
                 type: 2,
             },
-            'alt+digit4': {
+            'digit4': {
                 title: '开始裁剪',
                 content: "doAction('cut_start')",
                 type: 2,
@@ -77,19 +43,21 @@ g_extraTabs.register('cut', {
                 g_extraTabs.tabs.tab_ative('cut')
                 self.setTime('end')
             },
-            async cut_start(dom){
+            async cut_start(dom) {
                 let input = await g_player.getPlayer().getURL(true)
                 let { start, end } = self.times
-                let time = end - start;
+                let time = (end - start).toFixed(2);
                 if (end >= 0 && start >= 0 && !isNaN(time) && time > 0) {
                     g_extraTabs.tabs.tab_ative('clips')
-                    let clip = Object.assign(g_clips.currentClip || {}, {
+                    let clip = Object.assign({}, g_clips.currentClip || {}, {
                         start,
                         end,
                         time,
+                        tags: g_tag.selected
                     })
                     g_clips.addClip(clip)
                     self.cutVideo(input, clip)
+                    self.setTime('start', end, true, true)
                 }
             },
 
@@ -97,7 +65,7 @@ g_extraTabs.register('cut', {
 
     },
 
-    cutVideo(input, clip) {
+    cutVideo(input, clip, callback) {
         this.clearInputs()
         let { start, time } = clip
         // .replace('.mp4', '.ts')
@@ -123,6 +91,7 @@ g_extraTabs.register('cut', {
         }, progress => {
             g_clips.setStatus(clip, progress)
         }, err => {
+            callback && callback(err)
             g_clips.setStatus(clip, err ? '错误' : '', err ? 'red' : 'yellow')
             let cover = g_clips.getClipFile('cover', clip)
             g_ffmpeg.video_cover1({
@@ -138,14 +107,13 @@ g_extraTabs.register('cut', {
         })
     },
 
-    jumpTo(type) {
-        g_player.getPlayer().setCurrentTime(this.times[type])
+    jumpTo(type, play) {
+        g_player.getPlayer().setCurrentTime(this.times[type], play)
     },
+
     setInputs({ start, end }, show = true) {
         this.setTime('start', start)
         this.setTime('end', end)
-        $('#cut_start input').val(getTime(start))
-        $('#cut_end input').val(getTime(start))
         show && g_extraTabs.tabs.tab_ative('cut')
     },
     clearInputs() {
@@ -153,17 +121,18 @@ g_extraTabs.register('cut', {
             start: -1,
             end: -1,
         }, false)
+        g_tag.reset()
     },
     times: { start: 0, end: 0 },
     addTime(type, time, jump = true) {
         return this.setTime(type, this.times[type] * 1 + time * 1, jump)
     },
-    setTime(type, time, jump) {
-        let player =g_player.getPlayer()
+    setTime(type, time, jump = false, play = false) {
+        let player = g_player.getPlayer()
         if (time == undefined) time = player.getCurrentTime()
         if (time == undefined) return
 
-        time = time.toFixed(2)
+        time = (time * 1).toFixed(2)
         this.times[type] = time
         let { start, end } = this.times
 
@@ -171,33 +140,66 @@ g_extraTabs.register('cut', {
         //     this.times.start = Math.min(start, end )
         //     this.times.end = Math.max(start, end )
         // }
+        let isLocal = player.video.src.startsWith('file://')
         g_pp.setTimeout('coverTimer_' + type, async () => {
             let img = $(`#cut_${type} img`)
-            let cover = nodejs.dir + '\\' + type + '.jpg'
-            nodejs.files.remove(cover)
-            if (time >= 0) {
-                let player = g_player.getPlayer()
-                 // getImgBase64($(player.video)).then(src => img.attr('src', src))
-                 if(player.player.type != 'hls'){ // m3u8 
-                     g_ffmpeg.video_cover1({
-                        params: time,
-                        input: await player.getURL(true),
-                        output: cover,
-                        size: '240x180',
-                        spawn: { env: getProxy() }
-                    }, () => {
-                        img.attr('src', cover + '?t=' + new Date().getTime())
-                    })
-                 }else{
-                    time = -1
-                 }
+            if (isLocal) {
+                g_player.getCover('video', player.video, 280, 120).then(src => img.attr('src', src))
+            } else {
+                let cover = nodejs.dir + '\\' + type + '.jpg'
+                nodejs.files.remove(cover)
+                if (time >= 0) {
+                    if (player.player.type != 'hls') { // m3u8 
+                        g_ffmpeg.video_cover1({
+                            params: time,
+                            input: await player.getURL(true),
+                            output: cover,
+                            size: '240x180',
+                            spawn: { env: getProxy() }
+                        }, () => {
+                            img.attr('src', cover + '?t=' + new Date().getTime())
+                        })
+                    } else {
+                        time = -1
+                    }
+                }
+                img.attr('src', 'res/' + (time >= 0 ? 'loading.gif' : 'default.jpg'))
             }
-            img.attr('src', 'res/' + (time >= 0 ? 'loading.gif' : 'default.jpg'))
-        }, 500)
-        $('#cut_start input').val(getTime(this.times.start))
-        $('#cut_end input').val(getTime(this.times.end))
-        jump && this.jumpTo(type)
+        }, isLocal ? 0 : 250)
+        $('#cut_start input').val(getTime(start))
+        $('#cut_end input').val(getTime(end))
+        jump && this.jumpTo(type, play)
     },
 
+}
 
-})
+g_extraTabs.register('cut', {
+    index: 1,
+    onTabChanged: old => {
+
+    },
+    onVideoEvent: (type, { tab }) => {
+        if (type == 'show') {
+
+        }
+    },
+    tab: {
+        id: 'cut',
+        title: '<i class="ti ti-cut fs-2"></i>',
+        html: `
+            <div class="row overflow-y-auto h-full m-0" style="padding-bottom: 50px;">
+                <div class="col-3 p-4" id="cut_start">
+                    <img src="res/default.jpg" class="w-full shadow border rounded-3">
+                    <input class="form-control mt-1" placeholder="起点">
+                </div>
+                <div class="col-3 p-4" id="cut_end">
+                    <img src="res/default.jpg" class="w-full shadow border rounded-3">
+                    <input class="form-control mt-1" placeholder="终点">
+                </div>
+                <div class="col-6 p-2" id='tag_container'>
+                   
+                </div>
+            </div>
+            `
+    },
+}, g_cut)

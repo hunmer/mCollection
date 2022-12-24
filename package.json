@@ -4,7 +4,6 @@
   "description": "A minimal Electron application",
   "main": "main.js",
   "scripts": {
-    "youtube_tv": "chcp 65001 && electron main.js onlineCutter",
     "douyin": "chcp 65001 && electron main.js dou",
     "client": "chcp 65001 && electron .",
     "server": "cd server && node server.js",
@@ -29,8 +28,10 @@
   },
   "dependencies": {
     "@electron/remote": "^2.0.8",
+    "archiver": "^5.3.1",
     "aria2": "^4.1.2",
     "builder-util": "^23.5.0",
+    "chokidar": "^3.5.3",
     "concurrently": "^7.4.0",
     "electron-progressbar": "^2.0.1",
     "electron-store": "^8.1.0",

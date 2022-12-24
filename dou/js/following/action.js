@@ -38,36 +38,6 @@ g_ui.register('foll_updates', {
                             <span class="form-check-label">未观看</span>
                         </label>
                     </div>
-                    <div class="form-label">排序</div>
-                    <div class="mb-4">
-                        <label class="form-check">
-                            <input type="radio" class="form-check-input" name="form-salary" value="1" checked="">
-                            <span class="form-check-label">发布时间</span>
-                        </label>
-                        <label class="form-check">
-                            <input type="radio" class="form-check-input" name="form-salary" value="2" checked="">
-                            <span class="form-check-label">点赞量</span>
-                        </label>
-                        <label class="form-check">
-                            <input type="radio" class="form-check-input" name="form-salary" value="3">
-                            <span class="form-check-label">赞评比</span>
-                        </label>
-                        <label class="form-check">
-                            <input type="radio" class="form-check-input" name="form-salary" value="4">
-                            <span class="form-check-label">账号权重</span>
-                        </label>
-                    </div>
-                    <div class="form-label">发布日期</div>
-                    <div class="mb-4">
-                        <label class="form-check">
-                            <input type="radio" class="form-check-input" name="form-a" value="1" checked="">
-                            <span class="form-check-label">一天之内</span>
-                        </label>
-                        <label class="form-check">
-                            <input type="radio" class="form-check-input" name="form-a" value="2" checked="">
-                            <span class="form-check-label">一周之内</span>
-                        </label>
-                    </div>
                     <div class="form-label">分类</div>
                     <div class="mb-4">
                         <select class="form-select">
@@ -76,22 +46,6 @@ g_ui.register('foll_updates', {
                             <option>育儿</option>
                             <option>商业</option>
                         </select>
-                    </div>
-                    <div class="form-label">视图</div>
-                    <div class="mb-4">
-                        <label class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox">
-                            <span class="form-check-label form-check-label-on">不显示图标</span>
-                            <span class="form-check-label form-check-label-off">显示图标</span>
-                        </label>
-                    </div>
-                    <div class="mt-5">
-                        <button class="btn btn-primary w-100">
-                            保存过滤条件
-                        </button>
-                        <a class="btn btn-link w-100">
-                            重置
-                        </a>
                     </div>
                 </div>
             </div>
@@ -182,7 +136,7 @@ g_action.registerAction({
         });
     },
     foll_delete(dom) {
-        let uid = getParentAttr($(dom), 'data-uid')
+        let uid = getParentAttr(dom, 'data-uid')
         let d = g_foll.get(uid)
         confirm('你确定取消关注 【' + d.user.name + '】 吗?', {
             title: '取消关注',
@@ -405,7 +359,7 @@ Object.assign(g_foll, {
               </div>
 
                 <a class="d-block">
-                    <img src="${item.cover}" class="card-img-top w-full" data-loadvideo data-action="video_click" draggable="false">
+                    <img src="${item.cover}" class="card-img-top w-full" data-loadvideo data-action="video_click" >
                 </a>
                 <div class="card-body p-1">
                     <div class="d-flex align-items-center">

@@ -2,17 +2,17 @@ var g_app = {
 
     init: function() {
         g_dropdown.register('menu', {
-            position: 'top,end',
+            position: 'top-end',
             offsetLeft: 5,
-            onShow: function(e) {
-                this.opts.list = {
+            list(){
+                return {
                     db: {
                         title: '资源库',
                         icon: 'box',
                         action: 'db_menu',
                     }
                 }
-            },
+            }
         })
 
         g_action.

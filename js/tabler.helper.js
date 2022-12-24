@@ -54,16 +54,17 @@ var g_tabler = {
         let i = 0
         let id = opts.id || new Date().getTime()
         for (let [group, items] of Object.entries(groups)) {
+            let header = typeof(opts.header) == 'function' ? opts.header(group, items) : opts.header
             h += ` <div class="accordion-item" id="accordion-${id}-${group}">
                 <h2 class="accordion-header">
-                  <button data-collapse="${group}" class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-${id}-${group}" aria-expanded="true">
-                    ${opts.header.replace('{index}', ++i).replace('{i}', groups[group].length).replace('{title}',_l(group) || opts.emptyName)}
+                  <button tabindex="-1" data-collapse="${group}" class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-${id}-${group}" aria-expanded="true">
+                    ${header.replace('{index}', ++i).replace('{i}', groups[group].length).replace('{title}',_l(group) || opts.emptyName)}
                   </button>
                 </h2>`
             for (let item of items) {
                 h += `
-                    <div id="collapse-${id}-${group}" class="accordion-collapse collapse ${opts.default === true || group == opts.default ? 'show' : ''}" ${opts.parent ? `data-bs-parent="#accordion-${id}"` : ''}>
-                          <div class="accordion-body pt-0" >
+                    <div id="collapse-${id}-${group}" class="accordion-collapse collapse ${opts.default === true || group == opts.default ? 'show' : ''}" ${opts.parent ? `data-bs-parent="#accordion-${id}"` : ''} ${item.prop || ''}>
+                          <div class="accordion-body ${item.bodyClass} pt-0" >
                           ${opts.collapse_start}
                           ${item.html}
                           ${opts.collapse_end}

@@ -11,14 +11,13 @@ var g_detail = {
             },
             colors: {
                 html: d => {
+                    if (!d.json.colors) return ''
                     let h = ''
-                    let max = 9;
-                    (d.json.colors || []).forEach((color, i) => {
-                        if (i < max) {
-                            h += `
-                              <div class="color flex-fill" style="background-color: ${color}" title="${color}"></div>
+                    d.json.colors.slice(0, 9).forEach(color => {
+                        color = color.join(',')
+                        h += `
+                              <div class="color flex-fill" data-action="color_match" style="background-color: rgb(${color})" title="${color}"></div>
                             `
-                        }
                     })
                     return `<div class="d-flex w-full" style="height: 30px">${h}</div>`
                 }
@@ -32,13 +31,14 @@ var g_detail = {
                 `
             },
             tags: {
+                multi: true,
                 html: d => {
                     let h = ''
                     d.tags.forEach(tag => {
                         h += `
-                            <a href='#' class="badge m-1">
+                            <a href='#' class="badge m-1" data-action="showTag" data-tag="${tag}">
                                 <i class="ti ti-tag me-1"></i>
-                                <span data-action="tag_edit">${tag}</span>
+                                <span>${tag}</span>
                             </a>
                         `
                     })
@@ -52,6 +52,7 @@ var g_detail = {
                 }
             },
             textarea: {
+                multi: true,
                 html: d => `
                     <div class="input-group input-group-sm mb-3">
                       <span class="input-group-text" id="inputGroup-sizing-sm">注释</span>
@@ -60,6 +61,7 @@ var g_detail = {
                 `
             },
             link: {
+                multi: true,
                 html: d => `
                     <div class="input-group input-group-sm mb-3">
                       <span class="input-group-text" id="inputGroup-sizing-sm" data-action="detail_link">
@@ -70,13 +72,14 @@ var g_detail = {
                 `
             },
             folders: {
+                multi: true,
                 html: d => {
                     let h = ''
                     toArr(d.folders).forEach(folder => {
                         h += `
-                            <a href='#' class="badge badge-pill m-1">
+                            <a href='#' class="badge badge-pill m-1" data-action="showFolder" data-folder="${folder}">
                                 <i class="ti ti-folder me-1"></i>
-                                <span data-action="">${g_folder.folder_getName(folder)}</span>
+                                <span>${g_folder.folder_getName(folder)}</span>
                             </a>
                         `
                     })
@@ -90,30 +93,61 @@ var g_detail = {
                 }
             },
             status: {
-                html: d => `
+                multi: true,
+                // TODO 是否显示判断
+                html: d => {
+                    let h = ''
+                    let list = {
+                        uploader: {
+                            title: '上传者',
+                            class: 'bg-pink-lt',
+                            getVal: () => d.json.uploader
+                        },
+                        score: {
+                            title: '评分',
+                            class: 'bg-blue-lt',
+                        },
+                        size: {
+                            title: '大小',
+                            class: 'bg-indigo-lt',
+                            getVal: () => renderSize(d.size)
+                        },
+                        ext: {
+                            title: '扩展名',
+                            class: 'bg-lime-lt',
+                            getVal: () => {
+                                if (d.md5) {
+                                    return popString(g_item.item_getVal('file', d), '.')
+                                }
+                            }
+                        },
+                        px: {
+                            title: '视频大小',
+                            class: 'bg-orange-lt',
+                            getVal: () => {
+                                let { width, height } = d.json
+                                if (width && height) {
+                                    return width + 'x' + height
+                                }
+                            }
+                        },
+                    }
+                    for (let [k, v] of Object.entries(list)) {
+                        let val = v.getVal ? v.getVal() : d[k]
+                        if (isEmpty(val) || val === false) continue
+                        h += `
+                            <div class="d-flex p-1">
+                                <span class="badge ${v.class}">${v.title}</span>
+                                <div class="flex-fill text-end">${val}</div>
+                            </div>
+                        `
+                    }
+                    return `
                     <div class="rows align-items-center mt-2 w-full align-self-end">
-                        <div class="d-flex p-1">
-                            <span class="badge bg-blue-lt">评分</span>
-                            <div class="flex-fill text-end">${d.score}</div>
-                        </div>
-                       <div class="d-flex p-1">
-                            <span class="badge bg-indigo-lt">大小</span>
-                            <div class="flex-fill text-end">${renderSize(d.size)}</div>
-                        </div>
-                        <div class="d-flex p-1">
-                            <span class="badge bg-pink-lt">格式</span>
-                            <div class="flex-fill text-end">${d.json.format}</div>
-                        </div>
-                        <div class="d-flex p-1">
-                            <span class="badge bg-lime-lt">扩展名</span>
-                            <div class="flex-fill text-end">${popString(g_item.item_getVal('file', d), '.')}</div>
-                        </div>
-                        <div class="d-flex p-1">
-                            <span class="badge bg-orange-lt">视频大小</span>
-                            <div class="flex-fill text-end">${d.json.width+'x'+d.json.height}</div>
-                        </div>
-                    </div>
-                `
+                        ${h}
+                    </div>`
+                }
+
             },
         }
 
@@ -143,6 +177,13 @@ var g_detail = {
 
         let timer
         g_action.registerAction({
+            // 颜色相似过滤器
+            color_match(dom) {
+                colorTest(dom.title.split(',')).then(items => {
+                    g_datalist.tab_clearItems()
+                    g_datalist.tab_setItems(items)
+                })
+            },
             detailText: (dom, action) => {
                 clearTimeout(self.timer)
                 self.timer = setTimeout(() => self.saveChanges(), 2000)
@@ -157,18 +198,17 @@ var g_detail = {
                         }
                     }, changes => {
                         changes.added.forEach((add, i) => {
-                            if(!g_folder.folder_exists(add)){ // 检测是否有新文件夹
+                            if (!g_folder.folder_exists(add)) { // 检测是否有新文件夹
                                 let fid = guid()
-                                g_folder.folder_set(fid, {title: add})
-                                if(changes.newst.includes(add)){ // 是新目录
+                                g_folder.folder_set(fid, { title: add })
+                                if (changes.newst.includes(add)) { // 是新目录
                                     changes.added[i] = fid // 把目录名改成folderID
-                                } 
+                                }
                             }
                         })
-                        
                         this.selected_keys.forEach(md5 => g_folder.item_toggleFolders(md5, changes.added, changes.removed))
                         self.update()
-                    }).show(dom, 'start,top')
+                    }).show(dom, 'start-top')
                     clearEventBubble(e)
                     // 那多个怎么显示?
                     // 同时展示选中的标签，确定后删除被取消的标签，添加新增的标签
@@ -186,7 +226,7 @@ var g_detail = {
                     }, changes => {
                         this.selected_keys.forEach(md5 => g_tags.item_toggleTags(md5, changes.added, changes.removed))
                         self.update()
-                    }).show(dom, 'start,top')
+                    }).show(dom, 'start-top')
                     clearEventBubble(e)
                 }
             },
@@ -194,18 +234,34 @@ var g_detail = {
 
     },
 
+    assignObj(d) {
+        return Object.assign({
+            tags: [],
+            folders: [],
+            json: '{}',
+            date: 0,
+            birthtime: 0,
+            size: 0,
+            score: 0,
+            desc: '',
+            link: '',
+            ext: '',
+            title: '',
+        }, d)
+    },
+
     // 保存文本更改
     saveChanges() {
         if (this.timer) {
             clearTimeout(self.timer)
             delete this.timer
-            this.selected_keys.forEach(md5 => {
-                let data = g_data.data_get(md5)
-                g_data.data_setData(Object.assign(data, {
+            this.selected_keys.forEach(async md5 => {
+                let data = await g_data.data_get(md5)
+                g_data.data_set(md5, {
                     title: getEle({ input: 'detailText,title' }).val(),
                     desc: getEle({ input: 'detailText,desc' }).val(),
                     link: getEle({ input: 'detailText,link' }).val(),
-                }))
+                })
             })
             // TODO 更新datalist信息
         }
@@ -224,22 +280,21 @@ var g_detail = {
             html: '<div id="' + id + '" class="p-2"></div>',
             onShown: () => {
                 let keys = new Set()
-                // forEach实质是callback,所以不会等待async执行结束
-                this.selected_keys.forEach(async (md5, i) => {
+                Promise.all(this.selected_keys.map(async md5 => {
                     let data = await g_data.data_get(md5)
                     if (data[type]) {
                         data[type].forEach(v => keys.add(v)) // TODO 检测目录是否存在，不存在则创建
                     }
-                    if (i == this.selected_keys.length - 1) { // 判断是否最后一个
-                        obj = g_groupList.selector_build(id, {
-                            container: '#' + id,
-                            defaultList: 'sz',
-                            selected: Array.from(keys),
-                            onSelectedList: name => opts.onSelectedList(name),
-                            getName: name => type == 'folders' ? g_folder.folder_getName(name) : name,
-                        })
-                        obj.show()
-                    }
+                })).then(() => {
+                    obj = g_groupList.selector_build(id, {
+                        container: '#' + id,
+                        defaultList: 'sz',
+                        selected: Array.from(keys),
+                        onSelectedList: name => opts.onSelectedList(name),
+                        getHeader: name => type == 'folders' ? g_folder.folder_getName(name) : name,
+                        getName: name => type == 'folders' ? g_folder.folder_getName(name) : name,
+                    })
+                    obj.show()
                 })
             },
             onHide: () => {
@@ -249,25 +304,12 @@ var g_detail = {
     },
 
     // 单个项目列表
-    getHTML(d) {
+    getHTML(d, multi = false) {
         let h = ''
-        this.data = Object.assign({
-            // link: '',
-            // desc: '',
-            // json: {
-            //     colors: ['#206bc4', '#d6336c', '#17a2b8', '#f76707', '#4299e1', '#206bc4'],
-            //     duraction: 30,
-            //     format: 'mp4',
-            //     width: 300,
-            //     height: 200,
-            // },
-            // birthtime: new Date().getTime(),
-            // size: 221321,
-            // folders: ['文件夹1'],
-            // score: 4,
-        }, d)
+        d = this.assignObj(d)
         for (let [name, column] of Object.entries(this.columns)) {
-            h += `<div id="detail_columns_${name}" class="w-full">` + column.html(this.data) + '</div>'
+            if (multi && !column.multi) continue
+            h += `<div id="detail_columns_${name}" class="w-full">` + column.html(d) + '</div>'
         }
         return h
     },
@@ -291,70 +333,35 @@ var g_detail = {
     // 展示列表
     async showList(list) {
         this.saveChanges() // 保存上一次的更改
-
         this.selected_keys = list
+
         let i = list.length
         let h = ''
-        if (i == 0) { // 没有选中
-            h = `
-
-            `
-        } else
         if (i > 1) {
-            // 详情显示选中列表
-            let h1 = ''
             let size = 0,
                 duration = 0,
                 tags = new Set()
-
-            list.forEach(async (md5) => {
+            Promise.all(list.map(async (md5) => {
                 let d = await g_data.data_get(md5)
-                size += parseInt(getObjVal(d, 'stat.size', 0))
-                duration += parseInt(getObjVal(d, 'stat.duration', 0))
+                size += d.size
+                duration += parseInt(getObjVal(d, 'json.duration', 0))
                 d.tags.forEach(tag => tags.add(tag))
-
-                h1 += g_datalist.item_parse(d, `
-                    <div class="datalist-item col-12" data-action="item_unselected" {md5}>
-                    <div class="card card-sm h-full">
-                      <a class="d-block">
-                        <img src="{cover}" class="card-img-top thumb" {dargable} {preview}>
-                      </a>
-                      <div class="card-body">
-                          <div class="d-flex align-items-center">
-                            <div>
-                                <div>${d.title}</div>
-                            </div>
-                           </div>
-                      </div>
-                    </div>
-                </div>`)
+            })).then(() => {
+                $('#detail').html(g_detail.getHTML({
+                    size,
+                    duration
+                }, true))
             })
-            h += `
-            <div class="mb-3">
-                <span class="badge bg-danger me-2" onclick="g_detail.edit_tag()">${tags.size}个标签</span>
-                <span class="badge bg-danger me-2">${i}个项目</span>
-                <span class="badge bg-warning me-2">${renderSize(size)}</span>
-                ${duration ? `<span class="badge bg-info me-2">${getTime(duration)}</span>` : ''}
-            </div>
-            <div class="row w-full mb-3">
-                ${h1}
-            </div>
-            <div class="text-center w-full">
-                <button class="btn btn-primary" data-action="item_selected_clear">取消所有</button>
-            </div>
-
-            `
-            h += '</div>'
         } else {
             // 显示详情
             let d = copyObj(await g_data.data_get(list[0]))
+
             // 检查色卡是否存在
             if (!d.json.colors || !d.json.colors.length) {
                 g_item.item_setCover(list[0], g_item.item_getVal('cover', d))
             }
-            h = g_detail.getHTML(d)
+            $('#detail').html(g_detail.getHTML(d))
         }
-        $('#detail').html(h)
     },
 
     update: function() {
@@ -363,3 +370,21 @@ var g_detail = {
 }
 
 g_detail.init()
+
+function colorTest(rgb, max = 50) {
+    // TODO 颜色排序选项
+    return new Promise(reslove => {
+        g_data.all('SELECT json,md5 FROM videos WHERE deleted=0').then(items => {
+            let r = []
+            items.forEach(({ md5, json }) => {
+                json = JSON.parse(json)
+                if (json.colors) {
+                    let val = deltaE(json.colors[0], rgb)
+                    if (val <= max) r.push({ md5, val })
+                }
+            })
+            reslove(r.sort((a, b) => a.val - b.val)) // 比较的是颜色的不相似度？
+        })
+    })
+
+}

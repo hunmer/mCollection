@@ -22,10 +22,10 @@ var g_data = {
     async data_isTrashed(md5) {
         return await this.data_getVal(md5, 'deleted') === 1
     },
-  
+
     // 取结果
     get(query, ...args) {
-        return  this.db.prepare(query).get(args);
+        return this.db.prepare(query).get(args);
     },
 
     // 取结果
@@ -35,24 +35,43 @@ var g_data = {
     },
 
     // 执行操作
-     run(query, ...args) {
-        return  this.db.prepare(query).run(...args);
+    run(query, ...args) {
+        return this.db.prepare(query).run(...args);
     },
 
     // 指定md5保存数据
     data_set(md5, data, table = 'videos') {
         data = this.data_format(data)
         // data.md5 = md5
-        let keys = Object.keys(data);
+        return this.run(`UPDATE ${table} SET ${this.format_keys(data)} WHERE md5=?`, Object.values(data).concat(md5));
+
+    },
+
+    run1(query, dbFile, args){
+        return this.db.prepare(query, dbFile)
+    },
+
+    // 其他数据库指定md5保存数据
+    async data_setWithDB(md5, data, dbFile) {
+        // TODO 还是要想办法改API的灵活性
+        data = this.data_format(data)
+        let ret = await this.run1(`UPDATE videos SET ${this.format_keys(data)} WHERE md5=?`, dbFile).run(Object.values(data).concat(md5))
+        if(!ret.changes){
+            ret = await this.run1(`INSERT INTO videos (tags, title, folders, json, desc, md5, date, birthtime, score, size, ext, deleted) VALUES (@tags, @title, @folders, @json, @desc, @md5, @date, @birthtime, @score, @size, @ext, @deleted)`, dbFile).run(data)
+        }
+        return ret
+    },
+
+    format_keys(data){
         let s = '';
-        keys.every((key, i) => {
+        let keys = Object.keys(data);
+        keys.forEach((key, i) => {
             s += key + ' = ?';
             if (i != keys.length - 1) {
                 s += ','
             }
-            return true;
         });
-        return this.run(`UPDATE ${table} SET ${s} WHERE md5=?`, Object.values(data).concat(md5));
+        return s;
     },
 
     // 适用于改一次值
@@ -88,8 +107,8 @@ var g_data = {
         return typeof(md5) == 'object' ? md5 : await this.data_get(md5)
     },
 
-    data_getData1(md5, callback){
-        if(typeof(md5) == 'object') return callback(md5)
+    data_getData1(md5, callback) {
+        if (typeof(md5) == 'object') return callback(md5)
         this.data_get(md5).then(data => callback(data))
     },
 
@@ -175,7 +194,7 @@ var g_data = {
     init(funs = {}) {
         const self = this
         let init = funs.init
-        if(init){
+        if (init) {
             funs.init.apply(this)
             delete funs.init
         }
@@ -184,43 +203,53 @@ var g_data = {
     },
 
     // 文件列表转成对象
-    async file_revice(files, obj = true) {
-        let r = obj ? {} : []
+    // files 数组（文件列表） 对象（预设属性）
+     file_revice(files, obj = true, callback) {
+        return new Promise(async reslove => {
+            let r = obj ? {} : []
+            for(let [k, d] of Object.entries(files)){
+                let file
+                if( typeof(d) == 'object'){
+                    file = d.file
+                }else{
+                    file = d
+                    d = {}
+                }
+                file = file.replaceAll('\\', '//') // 替换正确路径
+                let { birthtimeMs, isFile, size } = nodejs.files.stat(file)
+                if (!isFile) continue;
 
-        for (let file of files) {
-            file = file.replaceAll('\\', '//') // 替换正确路径
-            let { birthtimeMs, isFile, size } = nodejs.files.stat(file)
-            if (!isFile) continue;
+                let json = {}
+                // TODO 简单判断是否为媒体文件
+                // TODO 进度显示
+                let meta = await g_ffmpeg.video_meta(file)
+                if (meta && meta.streams) {
+                    json.duration = meta.format.duration * 1
+                    json.width = meta.streams[0].coded_width
+                    json.height = meta.streams[0].coded_height
+                    json.frame = meta.streams[0].avg_frame_rate
+                }
+                Object.assign(d, {
+                    file,
+                    json,
+                    birthtime: parseInt(birthtimeMs),
+                    size: parseInt(size),
+                })
+                obj ? r[nodejs.files.getFileMd5(file)] = d : r.push(d)
+                callback && callback(d)
 
-            let json = {}
-            // TODO 简单判断是否为媒体文件
-            let meta = await g_ffmpeg.video_meta(file)
-            if (meta && meta.streams) {
-                json.duration = meta.format.duration * 1
-                json.format = meta.format.format_long_name
-                json.width = meta.streams[0].coded_width
-                json.height = meta.streams[0].coded_height
-                json.frame = meta.streams[0].avg_frame_rate
             }
-            let d = {
-                file: file,
-                json: json,
-                birthtime: parseInt(birthtimeMs),
-                size: parseInt(size),
-            }
-            obj ? r[nodejs.files.getFileMd5(file)] = d : r.push(d)
-            
-        }
-        this.data_import(r)
+            reslove(this.data_import(r))
+        })
     },
 
     // 对象格式化至可以插入SQL
     data_format(data) {
-        console.log(data);
         let d = copyObj(data)
-        d.tags = arr_join(d.tags)
-        d.folders = arr_join(d.folders)
-        d.json = JSON.stringify(d.json)
+        delete d.id // id会跟sql主键起冲突
+        if (d.tags != undefined) d.tags = arr_join(d.tags)
+        if (d.folders != undefined) d.folders = arr_join(d.folders)
+        if (d.json != undefined) d.json = JSON.stringify(d.json)
         return d
     },
 

@@ -8,27 +8,14 @@ let g_playlist = {
         let i = selected.length
         getEle('playlist_download').find('.badge').toggleClass('hide1', i == 0).html(i)
         if (i == 1) { // 单个选中，则加载视频
-            let { key: title, value: url } = selected[0]
+            let { value, key: title } = selected[0]
             let folder = this.getSaveTo(this.data.title)
-            const loadSrc = src => {
-                 console.log(src)
-                let tab = g_videoTabs.tab_new({
-                    value: src,
-                    title,
-                    url, // 网页链接
-                    poster: '',
-                    folder, // 数据保存目录
-                })
-                if(getConfig('autoPlay')){
-                    g_videoTabs.tabs.getContent(tab).getEle('video_reload').click()
-                }
-            }
-
-            let file = folder + title+'.mp4'
-            if(nodejs.files.exists(file)){
-                loadSrc(file)
-            }else{
-                g_rule.url_parse(url, loadSrc)
+            let file = folder + title + '.mp4'
+            const loadURL = url => g_player.newTab({ value: url, url: value, title, folder })
+            if (!nodejs.files.exists(file)) {
+                g_rule.url_parse(value, loadURL)
+            } else {
+                loadURL(file)
             }
         }
     },
@@ -44,7 +31,7 @@ let g_playlist = {
 
     selected_vals() {
         let r = []
-        for(let d of this.selected_list()){
+        for (let d of this.selected_list()) {
             r.push({
                 key: d.innerText,
                 value: d.dataset.value,
@@ -67,8 +54,8 @@ let g_playlist = {
         closeWindows()
 
         $('#playlist_detail').html('<div class="w-full text-center loading"><div class="spinner-grow text-center text-blue mt-3" role="status"></div></div>')
-
         g_rule.playlist_parse(url, data => {
+            console.log(data)
             g_playlist.parse(data)
         })
     },
@@ -76,9 +63,19 @@ let g_playlist = {
     init() {
         const self = this
         g_action.registerAction({
+            prompt_parsePlaylist() {
+                prompt(getClipboardText(), {
+                    title: '解析链接',
+                }).then(url => {
+                    self.parse_url(url)
+                })
+            },
             playlist_loadURL(dom, action) {
                 toast('正在加载播放列表中...')
-                g_playlist.parse_url(action[1])
+                g_playlist.parse_url(action[1] || getParentAttr(dom, 'data-target'))
+            },
+            playlist_openURL(dom) {
+                ipc_send('url', getParentAttr(dom, 'data-target'))
             },
             playlist_item_click(dom, action, e) {
                 if (e.shiftKey) { // 范围选中
@@ -103,18 +100,20 @@ let g_playlist = {
             playlist_web() {
                 ipc_send('url', self.url)
             },
-            playlist_folder(){
-                let path =  self.getSaveTo(self.data.title)
-                if(nodejs.files.exists(path+'playlist.json')) path += 'playlist.json'
+            playlist_folder() {
+                let path = self.getSaveTo(self.data.title)
+                if (nodejs.files.exists(path + 'playlist.json')) path += 'playlist.json'
                 ipc_send('openFolder', path)
             },
-            playlist_refresh(){
+            playlist_refresh() {
                 self.playlist_loadLast()
             },
             playlist_download() {
-                let {title} =  self.data
-                let pathName = getConfig('savePath') + title  + '\\'
+                let { title } = self.data
+                let pathName = getConfig('savePath') + title + '\\'
+                let i = 0
                 self.selected_vals().forEach(({ key, value }) => {
+                    i++
                     g_downloader.item_add(guid(), {
                         url: value,
                         pathName,
@@ -123,11 +122,20 @@ let g_playlist = {
                         category: title
                     }, false);
                 })
+                i && g_detailTabs.tabs.tab_ative('downlist')
             },
             playlist_coll_toggle() {
                 toast('成功' + (g_coll.coll_toggle(self.url, self.data) ? '收藏' : '取消收藏'))
             },
             playlist_item_selected_clear: dom => self.selected_clear(),
+        })
+
+        let getBtn = () => self.playlist_getItem(g_videoTabs.tabs.tab_getValue().url)
+        g_plugin.registerEvent('playPrev', () => {
+            getBtn().prev().click()
+        })
+         g_plugin.registerEvent('playNext', () => {
+            getBtn().next().click()
         })
 
         this.tabs = g_tabs.register('playlist_tabs', {
@@ -150,8 +158,7 @@ let g_playlist = {
                 `
             },
             onShow: tab => {},
-            onShown: tab => {
-            },
+            onShown: tab => {},
             onHide: tab => {},
             onClose: tab => {
 
@@ -162,32 +169,31 @@ let g_playlist = {
             position: 'start,top',
             offsetLeft: 0,
             offsetTop: 0,
-            onShow: function(){
+            onShow: function() {
 
             },
             list: [{
-                    title: '打开目录',
-                    icon: 'folder',
-                    action: 'playlist_folder',
-                }, {
-                    title: '刷新',
-                    icon: 'refresh',
-                    action: 'playlist_refresh',
-                }
-            ]
+                title: '打开目录',
+                icon: 'folder',
+                action: 'playlist_folder',
+            }, {
+                title: '刷新',
+                icon: 'refresh',
+                action: 'playlist_refresh',
+            }]
         })
 
     },
 
-    getSaveTo(pathName = '', fileName = ''){
-        return getConfig('savePath') + pathName.replace('('+cutString(pathName, '(', ')', 0, false)+')', '').trim() + '\\' + fileName
+    getSaveTo(pathName = '', fileName = '') {
+        return getConfig('savePath') + pathName.replace('(' + cutString(pathName, '(', ')', 0, false) + ')', '').trim() + '\\' + fileName
     },
 
-    playlist_loadLast(){
-          let playlist = getConfig('playlist_last')
-            if(playlist){
-                g_playlist.parse(playlist)
-            }
+    playlist_loadLast() {
+        let playlist = getConfig('playlist_last')
+        if (playlist) {
+            g_playlist.parse(playlist)
+        }
     },
 
 
@@ -195,19 +201,19 @@ let g_playlist = {
     parse(data) {
         this.data = data
         setConfig('playlist_last', data)
-
-        let {title, cover, desc} = data
+        let { title, cover, desc, list } = data
+        if (!list) return toast('没有捕获到剧集', 'danger')
 
         let path = this.getSaveTo(title)
-        if(nodejs.files.exists(path)){ // 如果目录存在,表示有视频下载
-            nodejs.files.write(path+'playlist.json', JSON.stringify({title, cover, desc}))
+        if (nodejs.files.exists(path)) { // 如果目录存在,表示有视频下载
+            nodejs.files.write(path + 'playlist.json', JSON.stringify({ title, cover, desc }))
         }
 
         $('#playlist_detail').attr('data-playlist', data.url).html(`
              <div class="card">
               <div class="card-body">
                 <div class="row align-items-center">
-                  <div class="col-3">
+                  <div class="col-4">
                     <img src="./res/loading.gif" data-src="${cover}" class="border rounded-3 lazyload">
                   </div>
                   <div class="col">
@@ -242,8 +248,8 @@ let g_playlist = {
         `).find('.lazyload').lazyload()
 
         let items = {}
-        let keys = Object.keys(data.list)
-        for (let [k, v] of Object.entries(data.list)) {
+        let keys = Object.keys(list)
+        for (let [k, v] of Object.entries(list)) {
             items[k] = {
                 id: k,
                 title: k,
@@ -254,15 +260,15 @@ let g_playlist = {
         if (keys.length) {
             this.tabs.tab_ative(keys[0]) // 默认选中第一个
             g_detailTabs.tabs.tab_ative('playlist')
-        }else{
+        } else {
             toast('没有捕获到播放列表', 'danger')
         }
     },
 }
 g_detailTabs.register('playlist', {
     // index: 3,
-    onTabChanged: old => {
-
+    onTabChanged: tab => {
+        if (!g_playlist.data) g_playlist.playlist_loadLast()
     },
     onVideoEvent: (type, { tab }) => {
         if (type == 'show') {

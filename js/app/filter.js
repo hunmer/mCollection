@@ -1,6 +1,5 @@
 var g_filter = {
     list: {},
-
     //  order by date desc
     presets: {
          all: {
@@ -18,11 +17,11 @@ var g_filter = {
             rule: "WHERE deleted=0 AND tags=''",
             onCntChange: i => $('#badge_noTag').html(i),
         },
-         // random: {
-        //     title: '随机模式',
-        //     rule: "",
-        //     onCntChange: i => $('#badge_recent').html(i),
-        // },
+         random: {
+            title: '随机模式',
+            rule: "WHERE deleted=0",
+            sort: 'random',
+        },
         // recent: {
         //     title: '最近使用',
         //     rule: "",
@@ -100,7 +99,7 @@ var g_filter = {
         for (let [name, item] of Object.entries(this.list)) {
             h += `
 				<div class="dropdown" id="dropdown_filter_${name}">
-				  <button class="btn btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
+				  <button tabindex="-1" class="btn btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
 				    ${item.icon ? `<i class="me-1 ti ti-${item.icon}"></i>` : ''}${item.title}
 				  </button>
 				  <ul class="dropdown-menu">

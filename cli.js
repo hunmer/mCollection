@@ -9,7 +9,7 @@ function run(exe, cmds, opts = {}, events = {}) {
         windowsHide: true,
         maxBuffer: 1024 * 3000,
     }, opts || {})
-    console.log(exe, cmds.join(' '), opts);
+    // console.log(exe, cmds.join(' '), opts);
     let child = child_process.spawn(exe, cmds, opts);
 
     // 中文要用iconv 英文就不能用
@@ -106,9 +106,8 @@ class ffmpeg {
     events = {}
     output = ''
     constructor(input, opts = {}) {
-        this.args = ['-y', ...(opts.args || [])]
+        this.args = ['-y', `-i "${input}"`, ...(opts.args || [])]
         delete opts.args
-        this.setInput(input);
         this.opts = opts;
         return this;
     }

@@ -79,7 +79,10 @@ let g_video = {
                 })
             },
             video_copyLink() {
-                g_api.douyin_shortenURL("https://www.iesdouyin.com/share/video/" + g_video.preview.aid).then(url => ipc_send('copy', g_video.preview.desc + ' ' + url))
+                g_api.douyin_shortenURL("https://www.iesdouyin.com/share/video/" + g_video.preview.aid).then(url => {
+                    g_clipboard.lastURL = url // todo 全局跳过从软件复制的链接
+                    ipc_send('copy', g_video.preview.desc + ' ' + url)
+                })
             },
             video_chart() {
                 g_browser.openURL('default', 'https://www.chanmama.com/awemeDetail/' + g_video.preview.aid + '/comment')
@@ -149,20 +152,7 @@ let g_video = {
     },
 
     video_loadVid(vid) {
-        g_api.douyin_fetchID(vid, data => {
-            if (data.item_list && data.item_list.length) {
-                let detail = data.item_list[0]
-                this.video_load(Object.assign(g_api.getVideoDetail(detail), {
-                    user: {
-                        uid: detail.author.uid,
-                        name: detail.author.nickname,
-                        icon: detail.author.avatar_thumb.url_list[0],
-                    }
-                }))
-            } else {
-                toast('无法获取视频信息，可能已被删除', 'danger')
-            }
-        })
+        g_api.douyin_videoDetail(vid).then(data => this.video_load(data), () => toast('无法获取视频信息，可能已被删除', 'danger'))
     },
 
     video_next() {
@@ -189,7 +179,7 @@ let g_video = {
     video_getSaveTo(item) {
         let { desc, aid } = item
         // getFormatedTime(3) + 
-        return getConfig('downloadPath') +  desc.replaceAll("\n", ' ') + '[' + aid + '].mp4'
+        return getConfig('downloadPath') +  nodejs.files.safePath(desc.replaceAll("\n", ' ')) + '[' + aid + '].mp4'
     },
 
     setPlayback(add) {
@@ -210,13 +200,13 @@ let g_video = {
 
     video_load(opts) {
         let { uid, vid } = opts
-
         if (uid) { // 用户视频
             let data = g_foll.getVideo(uid, vid)
             data.lastView = new Date().getTime() // 记录最后打开时间
             g_foll.save(false)
+
             opts = Object.assign({
-                user: g_foll.list[uid].user
+                user: Object.assign({uid}, g_foll.list[uid].user) // 补上uid信息...
             }, data)
         } else
         if (opts.user) { // 收藏的视频
@@ -226,7 +216,7 @@ let g_video = {
         g_plugin.callEvent('video_load', { opts }).then(() => {
             setConfig('lastVideo', opts)
             this.preview = opts
-            let div = $('#tab_video').attr({
+            let div = $('#tab_video').removeClass('hide').attr({
                 'data-vid': opts.aid,
                 // 'data-aid': opts.aid,
                 'data-uid': uid,
@@ -252,7 +242,7 @@ let g_video = {
             div.find('.ti-share').next().html(numToStr(opts.share))
             div.find('.ti-clock').next().html(getTime(opts.duration / 1000, ':', ':', '', false, 0))
             div.find('[data-action="user_homepage"]').html(opts.user.name)
-            div.find('img').prop({ title: opts.user.name, src: opts.user.icon })
+            div.find('img').prop({ title: opts.user.name, src: toURL(opts.user.icon) })
             div.find('.desc').html(opts.desc)
             div.find('.time').html(getFormatedTime(5, opts.time))
             div.find('.ti-star').toggleClass('text-warning', g_coll.exists(opts.aid))
@@ -280,7 +270,6 @@ g_detailTabs.register('video', {
         g_video.tryPlay()
     },
     onTabHiden() {
-        console.log('hide')
         g_video.tryPause()
     },
     onVideoEvent: (type, { tab }) => {
@@ -292,7 +281,7 @@ g_detailTabs.register('video', {
         id: 'video',
         title: '<i class="ti ti-video fs-2"></i>',
         html: `
-            <div class="h-full" id="tab_video">
+            <div class="h-full hide" id="tab_video">
                 <div id="douyin_player" class="position-relative">
                     <div id="range_video" class="position-absolute bottom-0 start-0 w-full slider-styled slider-round slider-hide" ></div>
                     <p demo-slider="slider11"></p>
@@ -305,7 +294,7 @@ g_detailTabs.register('video', {
                                 <img src="" class="rounded-circle mx-auto w-full" title="">
                             </div>
                             <div class="col text-truncate">
-                              <a href="#" class="text-reset d-block" data-action="user_homepage"></a>
+                              <a href="#" class=" d-block" data-action="user_homepage"></a>
                               <div class="d-block text-muted text-truncate mt-1">
                                   <div class="list-inline-item">
                                      <i class="ti ti-heart fs-2"></i><span></span>
@@ -330,7 +319,7 @@ g_detailTabs.register('video', {
 
                   </div>
                   <div class="card-body p-2">
-                    <span class="desc"></span>
+                    <span class="desc text-muted overflow-y-auto d-block" style="max-height: 70px;"></span>
                     <div class="d-block text-muted text-end time"></div>
                     <div class="btn-list mt-2 justify-content-center scroll-x  flex-nowrap">
                         <a class="btn btn-pill btn-ghost-primary" data-action="video_download" title="下载" id="video_download">

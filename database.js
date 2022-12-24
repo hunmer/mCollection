@@ -1,6 +1,6 @@
 // 等待socket连接后
 
-class Fetch {
+class QueryList {
     constructor() {
         this.list = {}
         this.id = 0
@@ -18,8 +18,7 @@ class Fetch {
     }
 }
 
-var _fetch = new Fetch()
-
+var queryList = new QueryList()
 class Result {
 
     constructor(db, query) {
@@ -31,7 +30,7 @@ class Result {
     send(type, args) {
         // console.log(type, args)
         return new Promise(reslove => {
-            let id = _fetch.add(reslove) // 回调id
+            let id = queryList.add(reslove) // 回调id
              g_client.send(type == 'exec' ? 'db_exec' : 'db_fetch', { db: this.db, query: this.query, args, id, type })
         })
     }
@@ -61,17 +60,20 @@ class Database {
         setTimeout(() => g_client.send('db_connect', { file, opts }), 0)
     }
 
-    exec(query) {
-        return new Result(this.file, query).exec()
+    exec(query, file) {
+        return new Result(file || this.file, query).exec()
     }
 
-    prepare(query) {
-        return new Result(this.file, query)
+    prepare(query, file) {
+        return new Result(file || this.file, query)
     }
 }
+
 g_client.registerRevice({
-    db_resp: ({ id, ret }) => _fetch.done(id, ret)
+    db_resp: ({ id, ret }) => queryList.done(id, ret)
 })
+
+
 module.exports = function(file, opts) {
     return new Database(file, opts)
 }

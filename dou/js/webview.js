@@ -19,7 +19,6 @@ ipcRenderer.on('loadJS', (event, arg) => {
     console.log(arg)
 });
 
-
 function doAction(arg) {
     switch (arg.type) {
         case 'home':
@@ -32,7 +31,6 @@ function doAction(arg) {
             return _webContent.canGoBack() && _webContent.goBack();
         case 'toggleFullscreen':
             return toggleFullScreen()
-
         default:
             return send(arg.type)
     }

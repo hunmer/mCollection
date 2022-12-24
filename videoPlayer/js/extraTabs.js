@@ -9,13 +9,6 @@ var g_extraTabs = {
             getTabIndex(tab){
                 return self.instance[tab].opts.index
             },
-            parseContent (k, v){
-                return `
-                    <div class="datalist h-full pb-4">
-                        <div class="row row-cards datalist-items"></div>
-                   </div>
-                `
-            },
             // parseTab: (k, v) => v.title,
             onShow (tab, e) {
                 self.instance[tab]  && self.instance[tab].opts.onTabChanged(tab, e)
@@ -25,7 +18,7 @@ var g_extraTabs = {
             items: {}
         })
 
-        loadRes([ 'js/extraTabs/cut.js' ], () => {
+        loadRes([ 'js/extraTabs/cut.js', 'js/extraTabs/tag.js' ], () => {
             g_extraTabs.tabs.tab_ative('cut') 
         })
     },
