@@ -33,6 +33,10 @@ var g_tabler = {
         // console.error = msg => alert(msg, { title: '错误', type: 'danger' })
     },
 
+    build_badge(text, color = 'blue'){
+        return `<span class="badge badge-outline m-1 text-${color}">${text}</span>`
+    },
+
     build_accordion(opts, obj = true) {
         opts = Object.assign({
             onOpen: e => {},
@@ -99,6 +103,33 @@ var g_tabler = {
             `
         })
         return `<div id="${d.id}">${h}</div>`
+    },
+
+    buildButtonGroup(list, classes = ''){
+        let h = ''
+        list.forEach(d => {
+            h += `
+            <a href="#" class="btn btn-icon" aria-label="Button" data-action="${d.action}" title="${d.title}">
+                <i class="ti ti-${d.icon} fs-2"></i>
+            </a>`
+        })
+        return `<div class="${classes} w-full btn-group" style="height: 35px;">${h}</div>`
+    },
+
+    buildDataGrid(list){
+        let h = ''
+        for (let v of list) {
+            h += `
+                <div class="d-flex p-1">
+                    <span class="badge bg-${v.color}-lt">${v.title}</span>
+                    <div class="flex-fill text-end">${v.value}</div>
+                </div>
+            `
+        }
+        return `
+        <div class="rows align-items-center mt-2 w-full align-self-end">
+            ${h}
+        </div>`
     }
 }
 

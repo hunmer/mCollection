@@ -39,6 +39,11 @@ var g_action = {
                     doAction(this, this.dataset.mousedown, event);
                 }
             })
+            .on('mouseup', '[data-mouseup]', function(event) {
+                if(event.which == 1){ // 左键
+                    doAction(this, this.dataset.mouseup, event);
+                }
+            })
             .on('dblclick', '[data-dbclick]', function(event) {
                 doAction(this, this.dataset.dbclick, event);
             })

@@ -9,7 +9,7 @@ var g_menu = {
                 left: 0;
                 width: 100%;
                 height: 100%;
-                z-index: 2;
+                z-index: 99999;
                 display: none;
             }
         </style>`).appendTo('body') 
