@@ -316,14 +316,14 @@ var g_tabs = {
             items: {},
             html: `
             <div class="card bg-unset h-full">
-                <div class="d-flex tab-tabs">
+                <div class="d-flex tab-tabs" style="height: 38px;">
                   <ul class="nav nav-tabs col" data-bs-toggle="tabs" role="tablist">
                   </ul>
                   <div class="col-auto">
                      ${opts.menu || `<a class="nav-link" data-action="tablist_opts"><i class="ti ti-dots"></i></a>`}
                   </div>
                  </div>
-              <div class="card-body h-full p-0">
+              <div class="card-body p-0"  style="height: calc(100% - 38px);">
                 <div class="tab-content h-full">
                 </div>
               </div>

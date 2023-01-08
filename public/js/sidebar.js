@@ -108,7 +108,7 @@ var g_sidebar = {
             div.html(d.html)
         } else {
             div = $(`
-                <div class="sidebar" id="${id}" style="${d.css}">
+                <div class="sidebar h-full overflow-hidden" id="${id}" style="${d.css}">
                     ${d.html}
                 </div>
             `).appendTo('html')

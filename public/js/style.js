@@ -26,7 +26,7 @@ var g_style = {
 	},
 	getSheet(name){
 		for(let sheet of document.styleSheets){
-			if(sheet.alt == name){
+			if(sheet.ownerNode.getAttribute('alt') == name){
 				return sheet
 			}
 		}
@@ -38,7 +38,9 @@ var g_style = {
 			}
 		}
 	},
-
+	setDisable(disabled){
+		this.getSheet(name).disabled = disabled
+	},
 
 }
 

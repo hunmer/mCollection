@@ -7,6 +7,24 @@ var g_cache = {
     folderPreset: {}, // 创建文件夹缓存
 }
 
+function urlMatchs(str, format){
+    let arr1 = str.split('/')
+    let arr2 = format.split('/')
+    let ret = {}
+    let match
+    if(arr1.length == arr2.length){
+        arr1.forEach((k1, i1) => {
+            let k2 = arr2[i1]
+            if(k2.startsWith('{') && k2.endsWith('}')){
+                return ret[k2.substr(1, k2.length - 2)] = arr1[i1]
+            }
+            match = k1 == k2
+            if(!match) return false
+        })
+    }
+    if(match) return ret
+}
+
 function toURL(url){
     if(url.startsWith('//')) url = 'https:'+url
     return url
@@ -14,6 +32,10 @@ function toURL(url){
 
 function debug(...args) {
     if (g_cache.debug) console.log(...args)
+}
+
+function toVal(v, ...args){
+    return typeof(v) == 'function' ? v.apply(v, args) : v
 }
 
 function isObjEqual(a, b) {

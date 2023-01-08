@@ -118,6 +118,13 @@ var g_form = {
                       </label>
                 `
 
+             case 'range':
+                opts = Object.assign({val: 0, min: 0, max: 100, step: 1}, d.opts)
+                return `
+                 <label class="form-label {required}">{title}</label>
+                 <input  id="{id}" type="range" class="form-range" min="${opts.min}" max="${opts.max}" step="${opts.step}">
+                `
+
             case 'checkbox_list':
                 return `
                     <div class="form-label">{title}</div>
@@ -325,6 +332,7 @@ var g_form = {
             case 'date':
             case 'select':
             case 'file_chooser':
+            case 'range':
                 return dom.value = val || ''
 
             case 'checkbox_list':
@@ -370,6 +378,9 @@ var g_form = {
             case 'select':
             case 'file_chooser':
                 return dom.value
+
+            case 'range':
+                return dom.value * 1
 
             case 'checkbox_list':
                 let r = []

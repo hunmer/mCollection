@@ -27,7 +27,6 @@ var PinYinTranslate = {
         for (var name in that.PinYin) {
             if (that.PinYin[name].indexOf(l1) != -1) {
                 return that.ucfirst(name);
-                break;
             }
         }
         return false;
@@ -65,6 +64,7 @@ var PinYinTranslate = {
     },
     check(s, f){
         if(this.isChinese(s)) return f.indexOf(s) != -1
+        f = f.toLowerCase()
         let py = PinYinTranslate.start(s);
         let sz = PinYinTranslate.sz(s);
         return f.indexOf(s) != -1 || PinYinTranslate.start(f).indexOf(py) != -1 || PinYinTranslate.sz(f).indexOf(sz) != -1
