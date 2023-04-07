@@ -1,0 +1,110 @@
+.ds-selector {
+    border: 1px dashed #0099FF;
+    background-color: #C3D5ED;
+    z-index: 999999;
+    filter: alpha(opacity:60);
+    opacity: 0.6;
+}
+
+.color {
+    cursor: pointer;
+}
+
+.border-hover {
+    border: 1px solid transparent;
+}
+
+.border-hover:hover {
+    border: 1px solid var(--tblr-blue) !important;
+}
+
+.cursor-text {
+    cursor: text;
+}
+
+.menu .list-group-item {
+    padding: 4px;
+}
+
+.datalist-items {
+    padding-bottom: 150px;
+}
+
+.theme-dark {
+    --tblr-body-color: #fafbfc;
+    --tblr-body-color-rgb: 250, 251, 252;
+    --tblr-body-bg: #95a7c7;
+    --tblr-body-bg-rgb: 27, 36, 52;
+    --tblr-card-bg: #1b6ef7;
+    --tblr-card-bg-rgb: 30, 41, 59;
+    --tblr-border-color: #2c3c56;
+    --tblr-border-color-light: #253249;
+    --tblr-btn-color: #1e293b;
+    color: #9ca2ad;
+    background-color: #1c1e23;
+}
+
+.theme-dark .list-group-item:not(.disabled):not(:disabled) {
+    color: #88929d;
+}
+
+.theme-dark .alert:not(.alert-important),
+.theme-dark .card,
+.theme-dark .card-footer,
+.theme-dark .card-stacked::after,
+.theme-dark .dropdown-menu,
+.theme-dark .footer:not(.footer-transparent),
+.theme-dark .modal-content,
+.theme-dark .modal-header,
+.theme-dark .toast,
+.theme-dark .form-fieldset,
+.theme-dark .toast-header {
+    background-color: #20242a;
+    color: inherit;
+}
+
+.theme-dark .nav-tabs .nav-item.show .nav-link,
+.theme-dark .nav-tabs .nav-link.active {
+    color: #09192e;
+    background-color: #778aaf;
+    border-color: #cbd5e1 #cbd5e1 #f5f7fb;
+}
+
+#icons_left i:not(:last-child) {
+    margin-right: 5px;
+}
+
+.dropdown-toggle {
+    height: 100%;
+}
+
+.folder_selected,
+.item_selected {
+    border: 4px solid #206bc4 !important;
+}
+
+.tag_selected {
+    color: #fff !important;
+    background: #206bc4 !important
+}
+
+.datalist-item {
+
+}
+
+/* 视频列表 */
+
+.item_previewing video {
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.item_previewing img.thumb {
+    display: none;
+}
+
+video.hideControls::-webkit-media-controls-enclosure {
+    display: none;
+}
