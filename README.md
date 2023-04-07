@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <img src="/screenshots.png">
+  <img src="/screenshot.png">
 </p>
 
 # 设计初衷
