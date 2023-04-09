@@ -75,7 +75,6 @@ class datalist_filter {
             }) // 总是更新唯一的where_do
         }
         where && sqlite.assignValue('where', where) // where_do 可以导入函数，判断where的键值是否匹配
-        g_datalist.tab_refresh()
     }
 
     registerActions() {

@@ -1,26 +1,4 @@
 
-#group_list .accordion-button {
-	padding: 5px;
-}
-
-
-#group_list .list-group-item {
-	padding: 5px;
-	border: hidden;
-	background: unset;
-}
-
-#group_list .accordion-body {
-	padding: 0;
-}
-
-#group_list .accordion-item {
-	border: hidden;
-	margin-bottom: 5px;
-}
-
-
-
 .color {
 	height: 20px;
 	margin: 1px;

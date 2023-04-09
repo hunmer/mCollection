@@ -1,96 +1,65 @@
 var g_datalist = {
-    views: {}, // 可切换的视图
     tab_new(opts) {
-        if(!opts) return
-        getConfig('oneTab') && this.tabs.clear()
-        let {sqlite, value, title, type} = opts
-        
-        this.tabs.try_add(v => {
-            return v[1].data.sqlite.equal(sqlite)
-        }, { // 不重复打开
-            title: toVal(title, ),
-            data: {
-                type,
-                sqlite,
-                value, // 目标参数，{type: folder, value: 文件夹} 
-                view: 'default', // 展示样式
-                page: 0, // 当前页数
-                pagePre: 20,
-                items: [], // 所有的md5列表？
-                loaded: [], // 加载过的md5列表
-            },
-        })
+        !getConfig('multiTab') && this.tabs.clear()
+        let {sqlite, title, type} = opts
+        sqlite = new SQL_builder(sqlite) // 保证对象兼容
+        let find = this.tabs.data.values().find(item => item.data.sqlite.equal(sqlite))
+
+        if(!find){
+            this.tabs.add({
+                title: toVal(title),
+                data: {
+                    type,
+                    sqlite,
+                    view: 'default', // 展示样式
+                    page: 0, // 当前页数
+                    pagePre: 20,
+                    items: [], // 所有的md5列表
+                },
+            }, true)
+        }else{
+            this.tabs.setActive(find.id)
+        }
     },
 
-    // 返回现在内容
-    content_get(tab) {
-        return this.tab_method('getContent', tab)
+    getCurrentTab() {
+        return this.tabs.getActive()
     },
 
-    // 返回当前tab
-    tab_getCurrent() {
-        return this.tabs.getCurrentTab()
+    getContent(tab){
+        tab ??= this.getCurrentTab()
+        return this.tabs.getEle(tab)
     },
 
-    // 关闭tab
     tab_remove(tab) {
-        return this.tab_method('tab_remove', tab)
-    },
-
-    // 带tab名称的动态tab方法
-    tab_method(method, tab, ...args) {
-        if (!tab) tab = this.tab_getCurrent()
-        return this.tabs[method](tab, ...args)
-    },
-
-    // 返回tab属性
-    tab_getOpts(tab) {
-        return this.tabs.tab_getValue(tab)
+        tab ??= this.getCurrentTab()
+        return this.tabs.remove(tab)
     },
 
     tab_getData(k, tab){
-        return this.tab_getOpts(tab).data[k]
+        tab ??= this.getCurrentTab()
+        let d = this.tabs.data.get(tab).data
+        return k != undefined ? d[k] : d
     },
 
-    tab_getTable(tab){
-        return g_datalist.tab_getData('sqlite', tab).getOption('table')
-    },
-
-    // 清空tabn内容
-    tab_clearItems(tab) {
-        this.tab_getContent(tab).html('')
-    },
-
-    tab_refresh(tab) {
-        this.tab_setItems([], tab)
-    },
-
-    // 设置items
     tab_setItems(items, tab) {
-        let data = this.tab_method('tab_getValue', tab).data
+        let data = this.tab_getData(undefined, tab)
         data.items = items
-        data.loaded = []
         data.page = -1
-        this.tab_clearItems(tab)
         this.page_nextPage()
     },
 
     tab_getContent(tab) {
-        return this.content_get(tab).find('.datalist-items')
+        return this.getContent(tab).find('.datalist-items')
     },
 
     // 指定tab加载items
-    async tab_loadItems(items, tab, insert) {
+    async tab_loadItems(items, tab, insert = 'appendTo') {
         let self = this
-        if (!insert) insert = 'appendTo'
-
-        let tab_data = this.tab_method('tab_getValue', tab)
-        if (!tab_data) return
-
-        let opts = tab_data.data
-        let table = opts.sqlite.getOption('table')
+        let {sqlite, view} = this.tab_getData(undefined, tab)
+        let table = sqlite.getOption('table')
         let target = this.tab_getContent(tab)
-        Promise.all(items.map(item => this.item_parse({data: item, view: opts.view, table}))).then(arr => {
+        Promise.all(items.map(item => this.item_parse({data: item, view, table}))).then(arr => {
             let h = arr.join('')
             target.find('.nomore').remove()
             if (!h) {
@@ -109,30 +78,71 @@ var g_datalist = {
          dom.find('.lazyload').lazyload()
          g_setting.apply('itemWidth') // 更新宽度
     },
+}
 
+
+// view 
+assignInstance(g_datalist, {
+    views: {}, // 可切换的视图
     get_html(d, view) {
         return this.views[view || 'default'].item(d)
     },
 
+    view_register(view, opts) {
+        this.views[view] = Object.assign({
+
+        }, opts)
+        opts.init && opts.init()
+    },
+    // 切换视图
+    view_switch(view, tab) {
+        this.tabs.data.setVal(tab, 'data.view', view)
+    },
+
+    // 更新视图
+    view_update(view, tab) {
+        this.view_switch(this.view_getCurrent())
+    },
+
+    // 返回视图
+    view_getCurrent(tab) {
+        return this.tabs.get('view')
+    },
+
+    // 返回视图基本结构
+    view_getContent(view) {
+        return toVal(this.views[view || 'default'].container)
+    },
+
+    // 切换排序
+    sort_switch(name, tab) {
+        this.tabs.data.setVal(tab, 'data.sort', name)
+    },
+
+    async view_parseItems(view, items) {
+        let opts = this.views[view]
+        if (opts) {
+            let html = (await Promise.all(items.map(data => this.item_parse({data, view})))).join('')
+            return $(toVal(opts.container)).find('.datalist-items').html(html)
+        }
+    },
+
+})
+
+assignInstance(g_datalist, {
     onScroll(dom) {
         let scrollTop = dom.scrollTop;
         if (scrollTop == 0) {
             // TODO 记录复原往上翻页？
             return;
         }
-        if (scrollTop + dom.offsetHeight + 50 >= dom.scrollHeight) {
+        if (scrollTop + dom.offsetHeight + 50 >= dom.scrollHeight && !g_pp.timerAlive('nextPage')) {
             g_pp.setTimeout('nextPage', () => g_datalist.page_nextPage(), 200)
         }
     },
 
     init() {
         const self = this
-
-        g_tabs.init({
-            // saveData: (name, data) =>  g_db.db_saveJSON('tabs_' + name, data),
-            // getData: name =>  g_db.db_readJSON('tabs_' + name, {}),
-        })
-
         g_ui.register('datalist', {
             target: '#content',
             html: `
@@ -165,26 +175,71 @@ var g_datalist = {
                 </div>
 
             `,
-            onShow: function() {},
-            onHide: function() {},
         }).show('datalist')
 
-        self.tabs = g_tabs.register('datalist', {
-            target: '#itemlist_tabs',
-            parseContent: (k, v) => {
-                return self.view_getContent(v.data.view)
-            },
-            // parseTab: (k, v) => v.title,
-            onShow: tab => {
-                let div = self.content_get(tab)
-                if (!div.find('.datalist-item').length) { // 没有数据
-                    self.page_toPage(tab, 0)
-                }
-            },
-            onHide: tab => {},
-            onClose: tab => {}
-        }).show()
 
+        g_plugin.registerEvent('db_connected', data => {
+            if (data.first && data.opts.type === DB_TYPE_DEFAULT) { 
+                let opts = {
+                    nowarp: true,
+                    name: 'tablist',
+                    container: '#itemlist_tabs',
+                    event_shown({tab}){
+                        if (!self.tab_getContent(tab).find('.datalist-item').length) { // 没有数据
+                            self.page_toPage(tab, 0)
+                        }
+                    },
+                    parseContent(k, v){
+                        return self.view_getContent(v.data.view)
+                    }
+                }
+                if(getConfig('tab_memory')){
+                    let id = 'tab_tablist_'+g_db.current
+                    opts.list = () => {
+                        let data = local_readJson(id, [])
+                        data.forEach(item => {
+                            item.data.sqlite = new SQL_builder(item.data.sqlite)
+                            item.data.page = 0 // 重置页数
+                            item.data.items = []
+                        })
+                        return data
+                    }
+                    opts.saveData = data => local_saveJson(id, data)
+                }
+                self.tabs = new TabList(opts)
+                self.tabs.refresh()
+            }
+        })
+
+        g_hotkey.register('ctrl+keyw',  {
+            title: '关闭当前tab',
+            content: "g_datalist.tabs.close(g_datalist.getCurrentTab())",
+            type: 2,
+        })
+        
+        g_setting.onSetConfig({
+            multiTab: () => g_datalist.tabs.clear(),
+            tab_memory: b => b && toast('刷新生效!')
+        })
+        
+        g_setting.tabs.tabs = {
+            title: '标签页',
+            icon: 'box-multiple',
+            elements: {
+                multiTab: {
+                    title: '多标签',
+                    type: 'switch',
+                    value: () => getConfig('multiTab', false),
+                },
+                tab_memory: {
+                    title: '标签记忆',
+                    help: '仅多标签模式下',
+                    type: 'switch',
+                    value: () => getConfig('tab_memory', false),
+                },
+            }
+        }
+     
     },
 
     // 解析item结构
@@ -207,7 +262,7 @@ var g_datalist = {
 
     // 到指定页数
     async page_toPage(tab, add = 0) {
-        let data = this.tab_method('tab_getValue', tab).data
+        let data = this.tab_getData(undefined, tab)
         data.page += add
 
         let start = data.page * data.pagePre;
@@ -222,7 +277,6 @@ var g_datalist = {
         let items = await Promise.all(data.items.slice(start, data.pagePre + start).map(async ({ md5 }) => {
             let item = await g_data.data_getData(md5, table)
             // 如果是回收站的，则应用meta到对象，让数据直接显示
-
             return item
         }))
         data.hasMore = items.length >= data.pagePre
@@ -246,6 +300,4 @@ var g_datalist = {
     },
 
 
-}
-
-g_datalist.init()
+})

@@ -50,8 +50,8 @@ var g_item = {
             }
         });
 
-        g_hotkey.hotkey_register('delete', { title: '删除', content: "doAction('item_trash')", type: 2 })
-        g_hotkey.hotkey_register('ctrl+keyt', { title: '标签', content: "getEle('detail_tags').click()", type: 2 })
+        g_hotkey.register('delete', { title: '删除', content: "doAction('item_trash')", type: 2 })
+        g_hotkey.register('ctrl+keyt', { title: '标签', content: "getEle('detail_tags').click()", type: 2 })
 
         g_dropdown.register('db_list', {
             position: 'end-top',
@@ -212,7 +212,7 @@ var g_item = {
                             // TODO 自定义封面？
 
                             // 判断云盘文件是否存在会卡顿
-                            if (!nodejs.files.exists(v)) {
+                            if (!v.startsWith('Y:') && !nodejs.files.exists(v)) {
                                 v = './res/loading.gif'
                                 // 生成封面
                                 // TODO 传入事件让插件生成对应的缩略图

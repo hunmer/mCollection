@@ -131,6 +131,33 @@ var g_category = {
             category: (dom, action) => g_datalist.tab_new(g_rule.getTabParams(action[1]))
         })
 
+        g_style.addStyle('category', `
+            #group_list .accordion-button {
+                padding: 5px;
+            }
+            
+            #group_list .list-group-item {
+                padding: 5px;
+                border: hidden;
+                background: unset;
+            }
+            
+            #group_list .accordion-body {
+                padding: 0;
+            }
+            
+            #group_list .accordion-item {
+                border: hidden;
+                margin-bottom: 5px;
+                max-height: 300px;
+                overflow: auto;
+            }
+
+            #group_list .accordion-item::-webkit-scrollbar {
+                width: 13px !important;
+            }
+        `)
+
         $(() => {
             this.update()
         })

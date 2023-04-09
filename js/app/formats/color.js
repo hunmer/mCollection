@@ -1,7 +1,6 @@
 $(function() {
     const doSearch = rgb => {
         searchColor(rgb).then(items => {
-            g_datalist.tab_clearItems()
             g_datalist.tab_setItems(items)
         })
     }

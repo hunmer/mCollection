@@ -7,7 +7,7 @@ $(function() {
     // })
     // g_detail.showList(['2d3706069a58c5dc87fdc308cb9b145b'])
      g_plugin.registerEvent('db_connected', ({ opts }) => {
-        if (opts.type === DB_TYPE_DEFAULT) {
+        if (opts.first && opts.type === DB_TYPE_DEFAULT) {
             test_showAll()
         }
     })

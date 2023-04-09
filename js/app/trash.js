@@ -85,7 +85,7 @@
                 title: '清空回收站',
                 type: 'danger'
             }).then(() => {
-                g_datalist.tabs.tab_getTypes('system', 'trash').forEach(tab => g_datalist.tab_remove(tab)) // 关闭回收站tab
+                g_datalist.tabs.search('system', 'trash').forEach(tab => g_datalist.tab_remove(tab)) // 关闭回收站tab
                 g_data.run(`DELETE FROM trash`).then(() => {
                     g_rule.refresh('trash')
                     toast('成功清空回收站!', 'success')

@@ -2,10 +2,11 @@ var g_client = {
     url: 'ws://127.0.0.1:41594',
     reconable: true,
     init() {
-        // g_cache.debug = true
+        this.connect() // 先尝试链接
         loadRes(['./server/tasker.js'], () => this.tryStartServer())
     },
     setConnected(b) {
+        // TODO 如果是远程服务器则显示连接状态与延迟
         // getEle('channel_startServer').toggleClass('hide', b);
 
         // let div = removeClass($('#badge_team_status'), 'bg-')
@@ -17,16 +18,18 @@ var g_client = {
         // TODO SOCKET回调函数
     },
     tryStartServer() {
-        g_pp.setTimeout('server_reload', () => this.startSever(), 1000 * 10)
-        fetch('http://127.0.0.1:41597').then(response => response.json()).then(data => {
-            if (data.status != 'success') {
+        g_pp.setTimeout('start_server', () => {
+            fetch('http://127.0.0.1:41597').then(response => response.json()).then(data => {
+                if (data.status != 'success') {
+                    this.startSever()
+                }else{
+                    this.connect()
+                }
+            }).catch(error => {
                 this.startSever()
-            }else{
-                this.connect()
-            }
-        }).catch(error => {
-            this.startSever()
-        });
+            });
+        }, 3000)
+       
     },
     startSever() {
         // return;
@@ -65,8 +68,7 @@ var g_client = {
         if (self.connection) self.connection.close();
         let socket = self.connection = new WebSocket(url || this.url);
         socket.onopen = () => {
-            g_pp.clearTimeout('server_reload')
-            
+            g_pp.clearTimeout('start_server')
             if (!this.lastConnect) { // 初次连接
 
             }
@@ -114,7 +116,6 @@ var g_client = {
     //     this.send(type, data)
     //     this.registerRevice()
     // },
-
     onRevice(data) {
         debug('revice', data);
         let d = data.data;
@@ -136,9 +137,9 @@ var g_client = {
         }
         let r = {type, data}
         debug('send', r);
-        if(type == 'db_fetch' && data.type == 'all'){
-            console.log(data.query)
-        }
+        // if(type == 'db_fetch' && data.type == 'all'){
+        //     console.log(data.query)
+        // }
         let s = JSON.stringify(r)
         if (!this.isConnected()) {
             this.sendList.push(s)

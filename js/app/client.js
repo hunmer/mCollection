@@ -3,16 +3,18 @@
 
 g_client.registerRevice({
     async db_connected(data) {
+        let first = g_db.first == undefined
+        if(first) data.first = g_db.first = 1
+            
         g_plugin.callEvent('db_connected', data)
         // 第一次连接数据库（刷新不触发）
         switch (data.opts.type) {
             case DB_TYPE_DEFAULT:
-                g_db.onFirstConnected(data)
+                first && g_db.onFirstConnected(data)
                 break
 
             case DB_TYPE_IMPORT:
                 // 外部其他软件(billfish)的数据库..
-                // TODO ...
                 g_pp.call('db_imported', data)
                 break
 

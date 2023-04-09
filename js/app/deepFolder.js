@@ -1,4 +1,4 @@
-module.exports = function(_opts) {
+module.exports = function (_opts) {
     var _icon = _opts.icon
     var _type = _opts.type
     var _table = _type + '_meta'
@@ -32,45 +32,45 @@ module.exports = function(_opts) {
 
             let actions = ['edit', 'delete', 'new', 'newSub', 'clear'].map(k => _type + '_' + k)
             g_action.
-            registerAction(actions, (dom, action) => {
-                let id = self.menu_key
-                g_dropdown.hide('actions_' + _type)
-                g_menu.hideMenu(_type + '_item')
-                switch (actions.indexOf(action[0])) {
-                    case 4:
-                        self.reset()
-                        break;
-                    case 3:
-                        return self.folder_edit(-1, id)
-                    case 0:
-                    case 2:
-                        return self.folder_edit(id || -1)
-                    case 1:
-                        // TODO 删除目录时更多选项(删除所有视频)
-                        return confirm('确定要删除目录【' + self.folder_getValue(id, 'title') + '】吗？\n删除后素材不会消失', {
-                            title: '删除目录',
-                            type: 'danger'
-                        }).then(() => self.folder_remove(id))
-                }
-                delete self.menu_key
-            }).
-            registerAction('detail_' + _type, (dom, action, e) => {
-                if (e.target.classList.contains('card-body')) { // 点最外围
-                    self.showPrompt(obj => {
-                        let selected = obj.getSelected()
-                        let ids = g_data.arr_join(
-                            selected.map((id, k) => {
-                                if (obj.newst.includes(id)) { // 新目录
-                                    id = self.folder_add(id)
-                                }
-                                return id
-                            })
-                        )
-                        Promise.all(g_detail.selected_keys.map(md5 => self.setItemFolder(md5, ids))).then(() => g_detail.updateColumns(_type)) // 放在setItemFolder会更好？
-                    }).show(dom, 'start-top')
-                    clearEventBubble(e)
-                }
-            })
+                registerAction(actions, (dom, action) => {
+                    let id = self.menu_key
+                    g_dropdown.hide('actions_' + _type)
+                    g_menu.hideMenu(_type + '_item')
+                    switch (actions.indexOf(action[0])) {
+                        case 4:
+                            self.reset()
+                            break;
+                        case 3:
+                            return self.folder_edit(-1, id)
+                        case 0:
+                        case 2:
+                            return self.folder_edit(id || -1)
+                        case 1:
+                            // TODO 删除目录时更多选项(删除所有视频)
+                            return confirm('确定要删除目录【' + self.folder_getValue(id, 'title') + '】吗？\n删除后素材不会消失', {
+                                title: '删除目录',
+                                type: 'danger'
+                            }).then(() => self.folder_remove(id))
+                    }
+                    delete self.menu_key
+                }).
+                registerAction('detail_' + _type, (dom, action, e) => {
+                    if (e.target.classList.contains('card-body')) { // 点最外围
+                        self.showPrompt(obj => {
+                            let selected = obj.getSelected()
+                            let ids = g_data.arr_join(
+                                selected.map((id, k) => {
+                                    if (obj.newst.includes(id)) { // 新目录
+                                        id = self.folder_add(id)
+                                    }
+                                    return id
+                                })
+                            )
+                            Promise.all(g_detail.selected_keys.map(md5 => self.setItemFolder(md5, ids))).then(() => g_detail.updateColumns(_type)) // 放在setItemFolder会更好？
+                        }).show(dom, 'start-top')
+                        clearEventBubble(e)
+                    }
+                })
 
             g_plugin.registerEvent('onBeforeShowingDetail', ({ items, columns }) => {
                 if (items.length == 1) {
@@ -135,51 +135,39 @@ module.exports = function(_opts) {
         showFolder(name) {
             // TODO 把这个方法写到category
             let h = ''
-            let datas = []
-            for (let [k, v] of Object.entries(this.folder_getChildren(name, true))) {
-                datas.push({
+            let datas = Object.entries(this.folder_getChildren(name, true)).map(function([k, v]){
+                return {
                     html: g_category.item_html(k, _type, v, 'category_' + _type),
                     group: name
-                })
-            }
+                }
+            })
 
             if (datas.length) {
                 let id = `category_${_type}_${name}`
                 let div = $("#accordion-" + id)
-                if (div.length) return div.remove(); // 隐藏
-
-                let accordion = g_tabler.build_accordion({
-                    id,
-                    datas,
-                    default: true,
-                    parent: false,
-                    header: '<span class="badge bg-primary">{i}个目录</span>',
-                    onOpen: () => {},
-                    collapse_start: `<div class="list-group list-group-flush">`,
-                    collapse_end: `</div>`,
-                })
-
-                accordion.find(`[data-list="${_type}"]`).prop('draggable', true)
-                getEle({ action: 'category_' + _type, list: _type, name }).parent('.row').append(accordion)
-
+                if (div.length){
+                    div.remove(); // 隐藏
+                } else{
+                    let accordion = g_tabler.build_accordion({
+                        id,
+                        datas,
+                        default: true,
+                        parent: false,
+                        header: '<span class="badge bg-primary">{i}个目录</span>',
+                        onOpen: () => { },
+                        collapse_start: `<div class="list-group list-group-flush">`,
+                        collapse_end: `</div>`,
+                    })
+                    accordion.find(`[data-list="${_type}"]`).prop('draggable', true)
+                    getEle({ action: 'category_' + _type, list: _type, name }).parent('.row').append(accordion)
+                }
+                return
             }
 
-            // 如果存在父目录过滤器，则应用规则
-            g_datalist.tabs.tab_getTypes(_type, this.folder_getParent(name)).forEach(tab => {
-                // 应该更新父tab的 太麻烦了直接删了
-                g_datalist.tab_remove(tab)
-            })
-
-            // 或者有按住ctrl
-            let tab = g_rule.getTabParams(_type, {
-                ids: [name],
-            })
-
+            let tab = g_rule.getTabParams(_type, {ids: [name]})
             let item = _inst.get(name)
             tab.title = `<i class='ti ti-${item.icon} me-1'></i>${item.title}`
-
-            g_datalist.tab_new(tab) // TODO 更精准查找?
-            // 直接展示目录项目
+            g_datalist.tab_new(tab)
         },
     }))
 
@@ -191,13 +179,12 @@ module.exports = function(_opts) {
                 search: 'id,md5',
                 table: 'files',
                 args: {
-                    [_type]: `JOIN ${_table} ON files.id = ${_table}.fid` },
+                    [_type]: `JOIN ${_table} ON files.id = ${_table}.fid`
+                },
                 where: {
-                    [_type]: `${_table}.ids like '%${g_data.arr_join(data.ids)}%'` }
+                    [_type]: `${_table}.ids like '%${g_data.arr_join(data.ids)}%'`
+                }
             }
-        },
-        value: s => {
-            return { type: _type, value: s }
         },
         sidebar: _opts.sidebar,
         update: false,
@@ -209,10 +196,10 @@ module.exports = function(_opts) {
     })
 
     g_category.
-    registerAction(_type, (dom, action) => {
-        _inst.menu_key = action[2] // TODO 设置dropdown的key
-        g_dropdown.show('actions_' + _type, dom)
-    })
+        registerAction(_type, (dom, action) => {
+            _inst.menu_key = action[2] // TODO 设置dropdown的key
+            g_dropdown.show('actions_' + _type, dom)
+        })
 
     g_dropdown.register('actions_' + _type, {
         position: 'top-end',

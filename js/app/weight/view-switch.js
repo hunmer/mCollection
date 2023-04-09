@@ -7,6 +7,7 @@ var g_view = {
         g_cache.itemWidth = width
         g_pp.setTimeout('itemWidth', () => setConfig('itemWidth', width), 50)
     },
+    
     init() {
         const self = this
         $(`<button tabindex="-1" class="btn btn-sm dropdown-toggle" data-target-dropdown="datalist_opts" data-dropdown-pos="start-bottom" >
@@ -146,7 +147,6 @@ var g_view = {
             reverse_toggle() {
                 g_setting.toggleValue('sort_reverse')
                 g_dropdown.hide('datalist_sort')
-                g_datalist.tab_refresh()
             }
         })
 

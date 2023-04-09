@@ -1,5 +1,9 @@
 class SQL_builder {
+
     constructor(opts) {
+        if(opts instanceof SQL_builder) return opts
+
+        if(opts.opts) opts = opts.opts // json格式化对象转成class
         this.opts = Object.assign({
             where: {},
             args: {},
@@ -91,7 +95,7 @@ class SQL_builder {
     }
 
     // 格式化文本
-    toString() {
+    toString(skip = []) {
         let { method, search, table, where, limit, order, data, args, where_do } = this.getOptions()
 
         if (data) {
@@ -101,25 +105,29 @@ class SQL_builder {
         }
 
         let temp = ''
-        where = Object.entries(where).sort() // 保证名称排序，不然会影响匹配
-        let len = where.length
-        where.forEach(([k, v], i) => {
-            let temp1 = toVal(v, data)
-            let lasted = i == len - 1
-            temp += temp1
-            let end = ['AND', 'OR'].find(s => temp1.endsWith(s))
-            if(!end){ 
-                if(!lasted){
-                    let name = Object.keys(where_do).find(k1 => k.startsWith(k1))
-                    temp += ' ' + (name ? toVal(where_do[name]) : 'AND') + ' ' 
+        if(!skip.includes('where')){
+            where = Object.entries(where).sort() // 保证名称排序，不然会影响匹配
+            let len = where.length
+            where.forEach(([k, v], i) => {
+                let temp1 = toVal(v, data)
+                let lasted = i == len - 1
+                temp += temp1
+                let end = ['AND', 'OR'].find(s => temp1.endsWith(s))
+                if(!end){ 
+                    if(!lasted){
+                        let name = Object.keys(where_do).find(k1 => k.startsWith(k1))
+                        temp += ' ' + (name ? toVal(where_do[name]) : 'AND') + ' ' 
+                    }
+                }else{
+                    //如果语句是以 OR AND 等等结尾的就不添加。。
+                    if(lasted) temp = temp.substring(0, temp.length - end.length) // 替换掉结尾多出来的...
+                    temp += ' '
                 }
-            }else{
-                //如果语句是以 OR AND 等等结尾的就不添加。。
-                if(lasted) temp = temp.substring(0, temp.length - end.length) // 替换掉结尾多出来的...
-                temp += ' '
-            }
-        })
-        where = (len ? 'WHERE ' : '') + temp
+            })
+            where = (len ? 'WHERE ' : '') + temp
+        }else{
+            where = ''
+        }
 
         args = Object.values(args)
         if(args.length) args = args.join(' ')
@@ -145,9 +153,10 @@ class SQL_builder {
         if (s) return formatText(s, { method, search, table, where, limit, order, args, data })
     }
 
-    equal(obj){
-        if(!obj instanceof SQL_builder) obj = new SQL_builder(OBJ)
-        return this.toString() == obj.toString()
+    equal(obj, skip = []){
+        return JSON.stringify(obj) == JSON.stringify(this)
+        // if(!obj instanceof SQL_builder) obj = new SQL_builder(obj)
+        // return this.toString(skip) == obj.toString(skip)
     }
 }
 

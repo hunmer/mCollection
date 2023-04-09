@@ -25,7 +25,7 @@ var g_rule = {
             return {
                 sqlite: new SQL_builder(toVal(opts.sqlite, data)),
                 title: opts.title,
-                value: opts.value,
+                // value: opts.value,
                 type: name
             }
         }

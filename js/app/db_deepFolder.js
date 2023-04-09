@@ -221,7 +221,6 @@ module.exports = function(self) {
     g_plugin.registerEvent('db_connected', ({ opts }) => {
         if (opts.type === DB_TYPE_DEFAULT) { // 连接数据库后获取列表
             self.refresh('first')
-
         }
     })
 

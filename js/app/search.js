@@ -1,83 +1,64 @@
 var g_search = {
-    searchBar: `
+    replaceHTML(html){
+        return html.replace('%search_bar%', `
         <div class="input-icon mb-3">
             <input type="text" value="" class="form-control" placeholder="搜索..." data-input="input_search" data-keydown="input_search_keydown">
             <span class="input-icon-addon">
               <i class="ti ti-search fs-2"></i>
             </span>
         </div>
-    `,
-    replaceHTML(html){
-        return html.replace('%search_bar%', this.searchBar)
+    `)
     },
-    defailtTab: 'file',
-    isFirstShowed: false,
+    defaultTab: 'file',
     init() {
         const self = this
-        // todo 多个快捷键
-        g_hotkey.hotkey_register('ctrl+keyj', {
+
+        g_hotkey.register('ctrl+keyj', {
             title: "搜索界面",
             content: "doAction('seach_show')",
             type: 2
         })
-        g_hotkey.hotkey_register('ctrl+tab', {
+        g_hotkey.register('ctrl+tab', {
             title: "搜索界面-下一个",
-            content: `g_modal.isShowing('modal_search') && g_search.tabs.tab_next()`,
+            content: `g_modal.isShowing('modal_search') && g_search.tabs.next()`,
             type: 2
         })
 
         g_action.registerAction({
             seach_show: () => self.show(),
-            input_search: dom => self.tab_search(self.tabs.getCurrentTab(), dom.value),
+            input_search: dom => self.tab_search(self.tabs.getActive(), dom.value),
             input_search_keydown(dom, a, e) {
                 let items = self.tab_getItems()
                 if (e.keyCode == 13 && items.length) {
                     items[0].click()
                 }
             },
-            search_file_item: dom => self.modal.hide(),
-            search_tag_item(dom) {
-                // todo 写在tags.js里
-                let tag = dom.dataset.value
-                if (tag != '') g_tags.showTag(tag)
-                self.modal.hide()
-            }
         })
 
         self.modal = g_modal.modal_build({
             title: '搜索',
             show: false,
             id: 'modal_search',
+            bodyClass: 'p-0 overflow-x-hidden',
             // static: false,
             scrollable: true,
-            bodyClass: 'p-0',
-            html: `
-                <div id='search_div'></div>
-            `,
+            html: `<div id='search_div'></div>`,
             onShow(){
-                if (!self.isFirstShowed) {
-                    self.isFirstShowed = true
-                    self.tabs.tab_active(self.defailtTab)
-                }else{
-                    self.input_focus()
+                if(self.changed){
+                    self.changed = 0
+                    self.refresh()
+                    self.tabs.setActive(self.defaultTab)
                 }
+                self.input_focus()
             }
         })
 
-        self.tabs = g_tabs.register('search', {
-            target: '#search_div',
-            saveData: false,
-            hideOneTab: false,
+        self.tabs = new TabList({
+            name: 'search',
+            container: '#search_div',
             items: copyObj(this.tabItems),
-            menu: `
-            <div class="d-flex">
-                <a class="nav-link p-2" data-action="" title="更多选项"><i class="ti ti-dots fs-2"></i></a>
-            </div>
-            `,
-            parseContent(k, v) {
-                return content
-            },
-            onShow(tab, ev) {
+            parseContent: () => content,
+            event_shown({tab}) {
                 self.input_focus(tab, 150)
             }
         })
@@ -96,8 +77,6 @@ var g_search = {
                 dom.find('.col-12').removeClass('col-12')
             }
         })
-
-        // self.show()
     },
 
     tabItems: {},
@@ -122,13 +101,15 @@ var g_search = {
     },
 
     list: {},
+    changed: 0,
     tabs_register(name, opts) {
+        opts.tab.id = name
         this.list[name] = opts
+        this.changed++
+    },
 
-        let tab = {}
-        tab[name] = Object.assign({ id: name }, opts.tab)
-        this.tabItems = Object.assign(this.tabItems, tab)
-        this.tabs.setItems(copyObj(this.tabItems))
+    refresh(){
+        this.tabs.setItems(Object.entries(this.list).map(([k, v]) => v.tab))
     },
 
     show() {
@@ -157,3 +138,5 @@ g_search.tabs_register('file', {
         return g_datalist.item_parse({data: item, view: 'list'})
     }
 })
+
+        

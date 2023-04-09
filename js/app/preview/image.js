@@ -1,3 +1,11 @@
+g_style.addStyle(`viewer`, `
+    .viewer-button.viewer-fullscreen {display: none}
+
+
+
+
+`)
+
 
 g_item.item_hidePreview = () => $('.icon_image_preview').remove()
 g_item.item_showPreview = async function(md5, show = true) {

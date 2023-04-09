@@ -1,5 +1,6 @@
-server/node_modules/
-scripts/
-test/
+bin/
 node_modules/
+test/
+server/node_modules/
+server/node.exe
 mCollection.zip

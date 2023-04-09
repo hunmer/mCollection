@@ -79,7 +79,7 @@ g_data.init({
 
             }, added => {
                 // TODO判断是否符合当前过滤器
-                if (added.length) g_datalist.tab_loadItems(added, g_datalist.tab_getCurrent(), 'prependTo')
+                if (added.length) g_datalist.tab_loadItems(added, g_datalist.getCurrentTab(), 'prependTo')
                 reslove(added)
             })
         })
