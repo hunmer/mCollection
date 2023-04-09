@@ -1,4 +1,5 @@
 bin/
+_gsdata_/
 node_modules/
 test/
 server/node_modules/
