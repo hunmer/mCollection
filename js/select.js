@@ -3,13 +3,22 @@ var g_range = {
     init(opts) {
         const self = this
         self.opts = opts
+        g_style.addStyle('range', `
+            .folder_selected,
+            .item_selected {
+                border: 4px solid #206bc4 !important;
+            }
+            .tag_selected {
+                color: #fff !important;
+                background: #206bc4 !important
+            }
+        `)
+        self.div = $(`<div id="selectDiv" style="position:absolute;width:0px;height:0px;font-size:0px;margin:0px;padding:0px;border:1px dashed #0099FF;background-color:#C3D5ED;z-index:999999;filter:alpha(opacity:60);opacity:0.6;display:none;pointer-events:none;">`).appendTo('body')
 
-        this.div = $(`<div id="selectDiv" style="position:absolute;width:0px;height:0px;font-size:0px;margin:0px;padding:0px;border:1px dashed #0099FF;background-color:#C3D5ED;z-index:999999;filter:alpha(opacity:60);opacity:0.6;display:none;pointer-events:none;">`)
-            .appendTo('body')
         $(window).on('click', function(e){
             let time = e.timeStamp
             if(time - self.lastClick <= 400 && self.currentClass){
-                for(let d of self.selected) d.classList.remove(self.currentClass)
+                self.selected.forEach(d => d.classList.remove(self.currentClass)) 
                 clearEventBubble(e)
                 delete self.currentClass
                 return false
@@ -26,11 +35,9 @@ var g_range = {
         }).on('mouseup', function(e) {
             self.moving = false
             self.hide()
-            let opts = self.get(self.current)
-            if (opts && opts.onEnd) opts.onEnd()
+            self.get(self.current)?.onEnd()
             delete self.current
         }).on('mousemove', function(e) {
-
             if (self.moving) {
                 let { clientX, clientY } = e
                 self.ex = e.screenX
@@ -48,8 +55,8 @@ var g_range = {
                 Object.keys(self.list).every(name => {
                     if (self.current != undefined && self.current != name) return true; // 放开之前只能选择一个组
 
-                    let opts = self.list[name]
                     let cnt = 0
+                    let opts = self.list[name]
                     $(opts.selector).each((i, dom) => {
                         let rect2 = dom.getBoundingClientRect()
                         // 更改为相对于滚动条的高度
@@ -74,18 +81,6 @@ var g_range = {
                 let _y = e.screenY;
                 let par = $(e.target).closest('.overflow-y-auto')[0] // 取可滚动的元素
                 if (par) {
-                    // self.scrollTop = par.scrollTop
-                    // if(self.firstScrollTop == undefined){
-                    //     self.parent = par
-                    //     self.firstScrollTop = self.scrollTop // 记录起始top
-                    //     let rect = par.getBoundingClientRect()
-                    //     // 取对象偏移位置
-                    //     self.offsetX = rect.x
-                    //     self.offsetY = rect.y
-                    //     par.style.position = 'relative'
-                    //     self.div.appendTo(par) // 插入
-                    // }
-
                     let { top, height } = par.getBoundingClientRect()
                     let offset = height * 0.25
                     if (_y - offset <= top) {
@@ -139,6 +134,7 @@ var g_range = {
 g_range.init({
 
 })
+
 g_range.add({
     datalist_item: {
         selector: '.datalist-items .datalist-item',

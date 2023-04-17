@@ -11,6 +11,6 @@
   "dependencies": {
     "better-sqlite3": "^7.6.2",
     "express": "^4.18.2",
-    "ws": "^8.10.0"
+    "ws": "^8.13.0"
   }
 }

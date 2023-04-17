@@ -1,4 +1,4 @@
-$(function() {
+(() => {
     const doSearch = rgb => {
         searchColor(rgb).then(items => {
             g_datalist.tab_setItems(items)
@@ -29,12 +29,14 @@ $(function() {
     }
 
     g_action.registerAction('color_search', dom => doSearch(dom.title.split(',')))
-
-    g_db.db.exec(`
-     CREATE TABLE IF NOT EXISTS color_meta(
-         fid      INTEGER PRIMARY KEY,
-         color   TEXT
-     );`)
+    g_plugin.registerEvent('db_connected', ({db}) => {
+        db.exec(`
+        CREATE TABLE IF NOT EXISTS color_meta(
+            fid      INTEGER PRIMARY KEY,
+            color   TEXT
+        );`)
+    })
+  
     g_data.table_indexs.color_meta = ['fid', 'color']
 
     const removeColor = (fid) => g_data.data_remove2({table: 'color_meta', key: 'fid', value: fid})
@@ -51,11 +53,11 @@ $(function() {
     g_plugin.registerEvent('onBeforeShowingDetail', ({ items, columns }) => {
         if (items.length == 1 && ['video', 'image'].includes(g_format.getFileType(items[0].title))) {
             columns.color = {
-                async html(d) {
+                async html([d]) {
                     let h = ''
                     let colors = await getColor(d)
                     if (!isEmpty(colors)) {
-                        h = colors.split('|').map(color => `<div class="color flex-fill" data-action="color_search" style="background-color: rgb(${color})" title="${color}"></div>`).join('')
+                        h = colors.split('|').map(color => `<div class="color flex-fill cursor-pointer" data-action="color_search" style="background-color: rgb(${color})" title="${color}"></div>`).join('')
                     } else {
                         // 侧边展示色卡丢失，生成色卡
                         loadColor(d.md5, await g_item.item_getVal('cover', d.md5))
@@ -85,4 +87,4 @@ $(function() {
             }
         })
     }
-});
+})()

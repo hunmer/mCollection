@@ -2,10 +2,11 @@
 // @name    未整理分类
 // @version    1.0
 // @author    hunmer
+// @updateURL   https://neysummer2000.fun/mCollection/scripts/未整理分类.js
 // @description    增加无标签和无文件夹分类到侧边栏
 // @namespace    3c5569cc-ce47-4733-a4f0-bc2d1df926f6
-
 // ==/UserScript==
+
 g_rule.register('noSort', {
     title: '未整理',
     sqlite: {

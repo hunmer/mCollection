@@ -51,7 +51,6 @@ var g_item = {
         });
 
         g_hotkey.register('delete', { title: '删除', content: "doAction('item_trash')", type: 2 })
-        g_hotkey.register('ctrl+keyt', { title: '标签', content: "getEle('detail_tags').click()", type: 2 })
 
         g_dropdown.register('db_list', {
             position: 'end-top',
@@ -127,25 +126,24 @@ var g_item = {
                 g_preview.preview(dom, await g_data.data_get(md5))
             },
             item_click: (dom, action, e) => {
-                if (e.shiftKey) { // 范围选中
-                    let list = self.selected_list()
-                    if (list.length) {
-                        let par = $(dom).parents('.datalist-items')
-                        let i1 = $(list[0]).index()
-                        let i2 = $(dom).index()
-                        for (let i = Math.min(i1, i2); i <= Math.max(i1, i2); i++) {
-                            par.find(`.datalist-item:eq(${i})`).addClass('item_selected')
-                        }
-                    }
-                } else {
-                    if (!e.ctrlKey) self.selected_clear()
-                    $(dom).toggleClass('item_selected')
-                }
-                self.selected_update()
+                // if (e.shiftKey) { // 范围选中
+                //     let list = self.selected_list()
+                //     if (list.length) {
+                //         let par = $(dom).parents('.datalist-items')
+                //         let i1 = $(list[0]).index()
+                //         let i2 = $(dom).index()
+                //         for (let i = Math.min(i1, i2); i <= Math.max(i1, i2); i++) {
+                //             par.find(`.datalist-item:eq(${i})`).addClass('item_selected')
+                //         }
+                //     }
+                // } else {
+                //     if (!e.ctrlKey) self.selected_clear()
+                //     $(dom).toggleClass('item_selected')
+                // }
+                // self.selected_update()
             },
             item_unselected: dom => {
                 // 从选中列表中移除
-                $('.datalist-item')
                 self.item_get(dom.dataset.md5).removeClass('item_selected')
                 self.selected_update()
             },
@@ -212,7 +210,7 @@ var g_item = {
                             // TODO 自定义封面？
 
                             // 判断云盘文件是否存在会卡顿
-                            if (!v.startsWith('Y:') && !nodejs.files.exists(v)) {
+                            if (!v.startsWith('http') && !v.startsWith('X:') && !nodejs.files.exists(v)) {
                                 v = './res/loading.gif'
                                 // 生成封面
                                 // TODO 传入事件让插件生成对应的缩略图

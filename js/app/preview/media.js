@@ -3,7 +3,7 @@ g_preview.register([...g_format.getCategory('video'), ...g_format.getCategory('a
         let {file, format, data, dom, opts} = ev
         let isVideo = g_format.getFileType(file) == 'video'
         ev.html = `
-            <div id="video_item_preview" class="position-relative p-0 m-0">
+            <div id="item_preview" class="position-relative p-0 m-0">
                 <video src="${fileToUrl(file)}" poster="${g_item.item_getVal('cover', data)}" class="w-full" autoplay loop onclick="toggleVideoPlay(this)" data-out="item_unpreview" data-outfor="item_preview" height="${dom.height}px"></video>
                 <div class="progress position-absolute bottom-0 w-full" style="height: 3px; pointer-events: none;">
                   <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%"></div>
@@ -40,7 +40,10 @@ g_preview.register([...g_format.getCategory('video'), ...g_format.getCategory('a
                     }
                     last = pos
                 }).
-                on('mouseleave', e => g_preview.unpreview()).
+                on('mouseleave', e => {
+                    g_preview.unpreview()
+                    video[0].load() // 停止视频加载
+                }).
                 on('mousewheel', function(e) {
                     if (!$('input:focus').length) {
                         e = e.originalEvent

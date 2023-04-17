@@ -72,30 +72,29 @@ module.exports = function (_opts) {
                     }
                 })
 
-            g_plugin.registerEvent('onBeforeShowingDetail', ({ items, columns }) => {
-                if (items.length == 1) {
+            g_plugin.registerEvent('onBeforeShowingDetail', ({ columns }) => {
                     columns[_type] = {
                         multi: true,
-                        async html(d) {
+                        async html(items) {
                             let h = '';
-                            (await self.getItemFolder(d)).forEach(folder => {
+                            let list = await Promise.all(items.map(item => self.getItemFolder(item.id)))
+                            uniqueArr(flattenArray(list)).forEach(folder => {
                                 h += `
-                                <a href='#' class="badge badge-pill m-1" data-action="showFolder_${_type}" data-folder="${folder}">
-                                    <i class="ti ti-${_icon} me-1"></i>
-                                    <span>${self.folder_getValue(folder, 'title')}</span>
-                                </a>
-                            `
+                                    <a href='#' class="badge badge-pill m-1" data-action="showFolder_${_type}" data-folder="${folder}">
+                                        <i class="ti ti-${_icon} me-1"></i>
+                                        <span>${self.folder_getValue(folder, 'title')}</span>
+                                    </a>
+                                `
                             })
                             return `
-                            <div class="card border-0 shadow-none bg-transparent w-full">
-                              <div class="card-body shadow-none p-1 border-hover cursor-text bg-none" data-action="detail_${_type}">
-                                ${h || `<span class="badge badge-secondary">${_opts.detailPlaceholder}</span>`}
+                            <div class="card border-0 shadow-none bg-transparent w-full mb-1">
+                              <div class="card-body d-flex flex-wrap align-items-center ps-0 shadow-none p-1 border-hover cursor-text bg-none" data-action="detail_${_type}">
+                                <span class="badge badge-secondary">${_opts.detailPlaceholder}</span> ${h}
                               </div>
                             </div>
                         `
                         }
                     }
-                }
             })
         },
 
@@ -166,7 +165,8 @@ module.exports = function (_opts) {
 
             let tab = g_rule.getTabParams(_type, {ids: [name]})
             let item = _inst.get(name)
-            tab.title = `<i class='ti ti-${item.icon} me-1'></i>${item.title}`
+            tab.icon = item.icon || _icon
+            tab.title = item.title
             g_datalist.tab_new(tab)
         },
     }))

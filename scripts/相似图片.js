@@ -3,8 +3,8 @@
 // @version    1.0
 // @author    hunmer
 // @description    查找相似图片(hash)
+// @updateURL   https://neysummer2000.fun/mCollection/scripts/相似图片.txt
 // @namespace    0b0e996b-4554-4973-b9c1-2c994bcf117c
-
 // ==/UserScript==
 ({
     getHash(file) {
@@ -72,11 +72,13 @@
         g_action.registerAction('hash_search', () => this.search(g_menu.key))
 
         this.worker = new Worker_IPC('scripts/相似图片_worker.js');
-        g_db.db.exec(`
-         CREATE TABLE IF NOT EXISTS hash_meta(
-             md5     TEXT(32),
-             hash    TEXT(64)
-         );`)
+        g_plugin.registerEvent('db_connected', () => {
+            g_db.db.exec(`
+            CREATE TABLE IF NOT EXISTS hash_meta(
+                md5     TEXT(32),
+                hash    TEXT(64)
+            );`)
+        })
         g_data.table_indexs.hash_meta = ['md5', 'hash']
         g_plugin.registerEvent('image.saveCover', async ({ md5, img }) => {
             let hash = await this.getHash(img)

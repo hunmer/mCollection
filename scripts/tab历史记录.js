@@ -3,8 +3,8 @@
 // @version    0.0.1
 // @author    hunmer
 // @description  ctrl+h 打开最近tab打开记录  
-// @updateURL    
 // @primary    1
+// @updateURL   https://neysummer2000.fun/mCollection/scripts/tab历史记录.txt
 // @namespace    a11a6f0f-615e-4201-99cb-d705affce1b0
 // ==/UserScript==
 ({
@@ -21,18 +21,21 @@
     },
     init() {
         const self = this
+        
         self.data = local_readJson(self.key+'_tabHistory', []),
         
         g_plugin.registerEvent('tablist_set', ({vals}) => {
             let {title, data, id} = vals
             let {sqlite, type} = data
+            if(sqlite == undefined) return
+            
             sqlite = new SQL_builder(sqlite)
             let obj = {
                 sqlite, type, title, id,
                 date: new Date().getTime()
             }
 
-            let index = self.data.findIndex(item => sqlite.equal(item.sqlite))
+            let index = sqlite ? self.data.findIndex(item => sqlite.equal(item.sqlite)) : -1
             if(index != -1){
                 self.data.splice(index, 1)
                 self.data.unshift(obj)
@@ -41,7 +44,10 @@
             }
             self.save()
         })
+
+
         g_action.registerAction({
+          
             tab_history: () => self.modal(),
             tab_history_clear(){
                 self.data = []
@@ -83,7 +89,10 @@
                 }, list)
             },
         })
+        
 
-    }
+    },
+
+   
 }).init()
 

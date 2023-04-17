@@ -1,13 +1,19 @@
-$(function() {
-    g_plugin.registerEvent('onBeforeShowingDetail', ({ items, columns }) => {
-        if (items.length == 1) {
+(() => {
+
+    g_plugin.registerEvent('onBeforeShowingDetail', ({ columns }) => {
             columns.preview = {
-                html: d => `
-                    <div class="text-center d-block">
-                      <img data-action="detail_image" src="${g_item.item_getVal('cover', d)}" alt="${d.title}" class="rounded p-1" style="max-height: 300px;">
-                    </div>
-                `
+                multi: true,
+                html(items){
+                    let h = ''
+                    let i = 0
+                    let cnt = items.length
+                    items.slice(0, 4).forEach(item => {
+                        i++
+                        h += `<img data-action="detail_image" src="${g_item.item_getVal('cover', item)}" alt="${item.title}" class="rounded p-1 col-${i != cnt ? 6 : (i % 2 == 0 ? 6 : 12)}">`
+                    })
+                    return `
+                    <div class="row m-0 p-0">${h}</div>`
+                }
              }
-        }
     })
-})
+})()

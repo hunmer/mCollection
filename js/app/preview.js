@@ -15,6 +15,19 @@ var g_preview = {
             item_unpreview: (dom, action, e) => self.unpreview(e)
         })
 
+        g_style.addStyle(`preview`, `
+            .item_previewing video {
+                z-index: 2;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+            
+            .item_previewing .card-preview > :not(#item_preview) {
+               display: none;
+            }
+        `)
+
         g_setting.
         onSetConfig('preview_mute', b => {
             getEle('preview_mute').find('i').replaceClass('ti-', 'ti-volume' + (b ? '-off' : ''))
@@ -22,20 +35,21 @@ var g_preview = {
         })
         g_plugin.registerEvent('item_fullPreview', ev => this.on('onFullPreview', ev))
         g_plugin.registerEvent('item_preview', ev => this.on('onPreview', ev))
+
         $(document).on('mouseleave', '.datalist', () => self.unpreview())
     },
     getElement(s = '') {
-        return $('#video_item_preview' + s)
+        return $('#item_preview' + s)
     },
     unpreview(ev) {
         // 在视频上打开菜单
         if (g_menu.target && g_menu.target.hasClass('datalist-item')) return;
         if (ev && ev.relatedTarget) {
             // 还在范围内
-            if ($(ev.relatedTarget).parents('#video_item_preview').length) return
+            if ($(ev.relatedTarget).parents('#item_preview').length) return
         }
         let dom = $('.item_previewing').removeClass('item_previewing')
-        dom.find('#video_item_preview').remove()
+        dom.find('#item_preview').remove()
         g_plugin.callEvent('item_unpreview', { ev, dom })
     },
     async fullPreview(dom, md5, opts = {}) {
@@ -56,9 +70,6 @@ var g_preview = {
                 typeof(cb) == 'function' && cb(modal)
             }
         })
-    },
-    video_get() {
-        return $('#video_item_preview video')[0]
     },
     async preview(dom, md5, opts = {}) {
         let html, cb

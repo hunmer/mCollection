@@ -28,7 +28,9 @@ g_data.init({
                 g_data.file_preRevice(r.files)
             }
         })
-        this.db = g_db.db_switch(getConfig('db'))
+        $(() => {
+            this.db = g_db.db_switch(getConfig('db'))
+        });
     },
     file_preRevice(files) {
         console.log(files)

@@ -18,4 +18,5 @@
         self.lastClickEle = e.target
         self.lastClick = time
     })
+    
 })();

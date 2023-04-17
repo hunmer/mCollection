@@ -9,6 +9,8 @@
 // ==/UserScript==
 
 g_db.getSaveTo = function(md5, path) {
-    if (isEmpty(path)) path = this.opts.path
-    return path.replace('D:\\', 'Y:\\') + `\\files\\${md5.substr(0, 2)}\\${md5.substr(2, 2)}\\${md5}\\`;
+    if (isEmpty(path)) path = this.opts.path;
+   let url = `http://124.222.144.154:5244/d/aliyun/library/影视/files/${md5.substr(0, 2)}/${md5.substr(2, 2)}/${md5}/`;
+   console.log(url);
+    return url;
 }

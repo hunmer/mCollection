@@ -3,6 +3,7 @@
 // @version    1.1
 // @author    hunmer
 // @description    数据库合并到其他库
+// @updateURL   
 // @namespace    0fa26d6d-6f3d-408f-b9ae-20b1e2b2e409
 
 // ==/UserScript==

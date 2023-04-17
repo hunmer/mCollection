@@ -9,6 +9,8 @@ module.exports = function(self) {
             reset: () => self.refresh('reset')
         },
         data_set(id, data) {
+            // TODO 移除meta空值..
+            data.icon ??= _icon
             data.meta = JSON.stringify(data.meta)
             return g_data.data_set2({
                 table: _type,
@@ -83,11 +85,7 @@ module.exports = function(self) {
                 return
 
             let id = this.folder_getIdByTitle(vals.title)
-            if (id != -1) {
-                // TODO 询问
-                return
-            }
-            id = this.getNextId()
+            if (id == -1) id = this.getNextId()
             this.set(id, vals)
             return id
         },
@@ -218,28 +216,25 @@ module.exports = function(self) {
 
     })
 
-    g_plugin.registerEvent('db_connected', ({ opts }) => {
-        if (opts.type === DB_TYPE_DEFAULT) { // 连接数据库后获取列表
-            self.refresh('first')
-        }
+    g_plugin.registerEvent('db_connected', () => {
+            g_db.db.exec(`
+            CREATE TABLE IF NOT EXISTS ${_type}(
+                id     INTEGER PRIMARY KEY AUTOINCREMENT,
+                title   VARCHAR(256),
+                icon   TEXT,
+                desc   TEXT,
+                meta   TEXT,
+                parent     INTEGER,
+                ctime     INTEGER
+            );
+
+            CREATE TABLE IF NOT EXISTS ${_table}(
+                fid    INTEGER PRIMARY KEY,
+                ids    TEXT
+            );
+        `)
+        self.refresh('first')
     })
-
-    g_db.db.exec(`
-         CREATE TABLE IF NOT EXISTS ${_type}(
-             id     INTEGER PRIMARY KEY AUTOINCREMENT,
-             title   VARCHAR(256),
-             icon   TEXT,
-             desc   TEXT,
-             meta   TEXT,
-             parent     INTEGER,
-             ctime     INTEGER
-         );
-
-         CREATE TABLE IF NOT EXISTS ${_table}(
-             fid    INTEGER PRIMARY KEY,
-             ids    TEXT
-         );
-    `)
 
     g_plugin.registerEvent('db_afterInsert', ({ opts, ret, meta, method }) => {
         let fid = ret.lastInsertRowid

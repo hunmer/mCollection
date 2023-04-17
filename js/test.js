@@ -6,12 +6,9 @@ $(function() {
     //     desc: 'this is folder1',
     // })
     // g_detail.showList(['2d3706069a58c5dc87fdc308cb9b145b'])
-     g_plugin.registerEvent('db_connected', ({ opts }) => {
-        if (opts.first && opts.type === DB_TYPE_DEFAULT) {
-            test_showAll()
-        }
-    })
+    test_showAll()
     return
+    
     g_data.data_import({
         "43d333f2abca4510c0c1f267948bf5fe": {
             "link": "",
@@ -39,3 +36,10 @@ $(function() {
 
 var test_showList = () => g_detail.showList(['2d3706069a58c5dc87fdc308cb9b145b'])
 var test_showAll = () => doAction('category,all')
+var _test = cb => {
+    g_plugin.registerEvent('db_connected', ({ opts, first }) => {
+        if (first && opts.type === DB_TYPE_DEFAULT) {
+            cb()
+        }
+    })
+}

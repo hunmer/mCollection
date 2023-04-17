@@ -1,4 +1,11 @@
 g_setting.setDefault('switchShow', 'CommandOrControl+Alt+X')
+g_setting.setDefault('darkMode', false)
+g_hotkey.register('f7',  {
+    title: '设置',
+    content: "doAction('settings,general')",
+    type: 2,
+})
+
 g_setting.tabs.general = {
     title: '常规',
     icon: 'home',
@@ -14,13 +21,13 @@ g_setting.tabs.library = {
     icon: 'box',
     elements: {
         // TODO 全局导入设置
-        importType: {
-            title: '导入方式',
-            require: true,
-            type: 'select',
-            list: { copy: '复制', move: '移动', link: '链接' },
-            value: () => getConfig(g_db.current + '_importType', 'copy'),
-        },
+        // importType: {
+        //     title: '导入方式',
+        //     require: true,
+        //     type: 'select',
+        //     list: { copy: '复制', move: '移动', link: '链接' },
+        //     value: () => getConfig(g_db.current + '_importType', 'copy'),
+        // },
     }
 }
 

@@ -2,7 +2,6 @@ g_filter.filter_set('color', new datalist_filter({
     icon: 'palette',
     name: 'color',
     desc: '颜色',
-    
     preUpdate({ val, match, sqlite }) {
         // ？还是匹配全部？
         if(sqlite.checkOption('where', [])){

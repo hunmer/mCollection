@@ -18,6 +18,8 @@ var g_folders = require('./js/app/deepFolder.js')({
         },
 })
 
+g_hotkey.register('ctrl+keyf', { title: '设置文件夹', content: "getEle('detail_folders').click()", type: 2 })
+
 g_rule.register('noFolder', {
     title: '无分组',
     sqlite: {
@@ -36,7 +38,8 @@ g_action.registerAction('search_folders_item', dom => {
 
 g_search.tabs_register('folders', {
     tab: {
-        title: '<i class="ti ti-folder fs-2 me-2"></i>文件夹',
+        icon: 'folder',
+        title: '文件夹',
         getTabIndex: () => 2,
         html: g_search.replaceHTML(`%search_bar%<div class="search_result list-group list-group-flush overflow-auto"></div>`)
     },

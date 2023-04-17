@@ -1,10 +1,11 @@
-$(function() {
-
-    g_db.db.exec(`
-     CREATE TABLE IF NOT EXISTS url_meta(
-         fid  INTEGER PRIMARY KEY,
-         url TEXT
-     );`)
+(() => {
+     g_plugin.registerEvent('db_connected', ({db}) => {
+        db.exec(`
+        CREATE TABLE IF NOT EXISTS url_meta(
+            fid  INTEGER PRIMARY KEY,
+            url TEXT
+        );`)
+    })
     g_data.table_indexs.url_meta = ['fid', 'url']
     const removeURL = (fid) => g_data.data_remove2({table: 'url_meta', key: 'fid', value: fid})
     const setURL = (fid, url) => g_data.data_set2({ table: 'url_meta', key: 'fid', value: fid, data: { fid, url } })
@@ -12,20 +13,19 @@ $(function() {
 
     g_detail.inst.url = {set: setURL, get: getURL, remove: removeURL}
 
-    g_plugin.registerEvent('onBeforeShowingDetail', ({ items, columns }) => {
-        if (items.length == 1) {
-            columns.url = {
-                async html(d) {
-                    let url = await getURL(d)
-                    return `
-                    <div class="input-group input-group-sm mb-3">
-                      <span class="input-group-text" id="inputGroup-sizing-sm" data-action="detail_url">
-                        <i class="ti ti-link"></i>
-                      </span>
-                      <input type="text" data-input="detailChanged,url" data-change="detailChanged,url" placeholder="https://" class="form-control form-control-flush border-hover"  value="${url || ''}">
-                    </div>`
-                },
-            }
+    g_plugin.registerEvent('onBeforeShowingDetail', ({ columns }) => {
+        columns.url = {
+            multi: true,
+            async html(items) {
+                let url = items.length == 1 ? await getURL(items[0]) : ''
+                return `
+                <div class="input-group input-group-sm mb-2">
+                    <span class="input-group-text" id="inputGroup-sizing-sm" data-action="detail_url">
+                    <i class="ti ti-link"></i>
+                    </span>
+                    <input type="text" data-input="detailChanged,url" data-change="detailChanged,url" placeholder="https://" class="form-control form-control-flush border-hover"  value="${url || ''}">
+                </div>`
+            },
         }
     })
 
@@ -43,4 +43,4 @@ $(function() {
         }
     })
 
-})
+})()

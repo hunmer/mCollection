@@ -1,0 +1,9 @@
+// ==UserScript==
+// @name    eagle&billfish导入
+// @version    1.0
+// @author    hunmer
+// @description    指定素材库位置直接导入，无需导出资源包
+// @directURL   https://neysummer2000.fun/mCollection/scripts/eagle&billfish导入.js
+// @namespace    6aabbcd5-b8ce-4182-b0fe-2054bee005d3
+
+// ==/UserScript==

@@ -2,6 +2,7 @@
 // @name        数据库升级
 // @version     1.0
 // @author      hunmer
+// @updateURL   
 // @description 
 // ==/UserScript==
 

@@ -3,6 +3,7 @@
 // @version    1.0
 // @author    hunmer
 // @description    储存视频音频exif,并添加过滤器
+// @updateURL   https://neysummer2000.fun/mCollection/scripts/音视频exif.txt
 // @namespace    23216309-d490-41ae-988b-ec72b10bbfa1
 
 // ==/UserScript==
@@ -97,11 +98,13 @@
             exif_status: () => this.status(g_menu.key),
         })
 
-        g_db.db.exec(`
-         CREATE TABLE IF NOT EXISTS exif_meta(
-            fid      INTEGER PRIMARY KEY,
-            data    TEXT(64)
-         );`)
+        g_plugin.registerEvent('db_connected', () => {
+            g_db.db.exec(`
+            CREATE TABLE IF NOT EXISTS exif_meta(
+               fid      INTEGER PRIMARY KEY,
+               data    TEXT(64)
+            );`)
+        })
 
         g_data.table_indexs.exif_meta = ['fid', 'data']
         g_plugin.registerEvent('db_afterInsert', async ({ opts, ret, meta, method }) => {

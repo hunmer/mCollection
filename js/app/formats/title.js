@@ -1,13 +1,17 @@
-$(function() {
+(() => {
+
     g_plugin.registerEvent('onBeforeShowingDetail', ({ items, columns }) => {
         if (items.length == 1) {
             columns.title = {
-                html: d => `
-                    <div class="input-group input-group-sm mb-3">
+                multi: false,
+                html([d]){
+                    return `
+                    <div class="input-group input-group-sm mb-2">
                       <span class="input-group-text" id="inputGroup-sizing-sm">名称</span>
                       <input data-input="detailChanged,title" data-change="detailChanged,title" type="text" class="form-control form-control-flush border-hover" placeholder="..." value="${getFileName(d.title, false) || ''}">
                     </div>
                 `
+                }
             }
         }
     })
@@ -26,4 +30,4 @@ $(function() {
         })
     })
 
-})
+})()

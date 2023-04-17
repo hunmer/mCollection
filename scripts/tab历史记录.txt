@@ -1,0 +1,9 @@
+// ==UserScript==
+// @name    tab历史记录
+// @version    0.0.1
+// @author    hunmer
+// @description  ctrl+h 打开最近tab打开记录  
+// @primary    1
+// @directURL   https://neysummer2000.fun/mCollection/scripts/tab历史记录.txt
+// @namespace    a11a6f0f-615e-4201-99cb-d705affce1b0
+// ==/UserScript==

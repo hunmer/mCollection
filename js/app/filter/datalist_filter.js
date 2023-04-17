@@ -8,10 +8,11 @@ g_datalist.filter = {
         }
     },
 
-    set(name, data) {
+    set(name, data, id) {
+        id ??= g_datalist.getCurrentTab()
         let inst = this.get(name)
         if (inst) {
-            inst.data = data
+            inst.data[id] = data
             inst.callback(data)
         }
     },
@@ -21,7 +22,7 @@ g_datalist.filter = {
     },
 }
 
-
+// TODO filter复数支持，对应tab或者其他(type: tab...)
 class datalist_filter {
     data = {}
     title = ''
@@ -30,7 +31,7 @@ class datalist_filter {
         this.registerActions()
     }
 
-
+    // 设置过滤数据
     setData(data) {
         Object.assign(this.data, data)
         this.update()
@@ -40,8 +41,10 @@ class datalist_filter {
 
     }
 
+    // 清空过滤数据
     clearData() {
-        this.data = {}
+        this.data.val = []
+        
         // TODO 判断是否有开启高级过滤器再选择是否关闭
         this.getInput('match').val('AND')
         this.getInput('equal').val('like')
@@ -50,6 +53,7 @@ class datalist_filter {
         this.update()
     }
 
+    // 更新过滤结果
     update() {
         // TODO 判断目标table是否为files
         let name = this.name
@@ -64,6 +68,7 @@ class datalist_filter {
         let sqlite = data.sqlite = g_datalist.tab_getData('sqlite')
         let where = this.preUpdate(data)
         if (cnt == 0) { // 没有选中,清空过滤器
+            // TODO 如何保存tab修改前的sqlite呢?data里的类似sqlite的filters属性?清空过滤器则复原
             let cb = ([k]) => k.startsWith(name)
             sqlite
                 .removeOption('args', cb)
@@ -75,8 +80,10 @@ class datalist_filter {
             }) // 总是更新唯一的where_do
         }
         where && sqlite.assignValue('where', where) // where_do 可以导入函数，判断where的键值是否匹配
+        g_datalist.tab_clear(undefined, true)
     }
 
+    // 注册事件
     registerActions() {
         let id = this.name + '_filter_'
         g_input.bind({
@@ -96,10 +103,12 @@ class datalist_filter {
         g_action.registerAction(id + 'reset', () => this.clearData())
     }
 
+    // 获取输入框
     getInput(name){
         return $(`[name="${this.name}_filter_${name}"]`)
     }
 
+    // 获取结构html
     getFilterHTML() {
         let id = this.name + '_filter_'
         const build = g_tabler.build_select
@@ -134,6 +143,7 @@ class datalist_filter {
           //       })}
     }
 
+    // 获取主体
     getBody() {
         return this.dropdown.getElement().find('.dropdown_content')
     }

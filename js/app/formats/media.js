@@ -1,16 +1,42 @@
-$(function() {
+(() => {
 
     // 获取导入的视频信息并储存到独立db
-    g_db.db.exec(`
-     CREATE TABLE IF NOT EXISTS media_meta(
-         fid      INTEGER PRIMARY KEY,
-         duration INT,
-         width    INT,
-         height   INT,
-         frame    TINYINT,
-         bit_rate INT,
-         sample_rate INT
-     );`)
+     g_plugin.registerEvent('db_connected', ({db}) => {
+        db.exec(`
+        CREATE TABLE IF NOT EXISTS media_meta(
+            fid      INTEGER PRIMARY KEY,
+            duration INT,
+            width    INT,
+            height   INT,
+            frame    TINYINT,
+            bit_rate INT,
+            sample_rate INT
+        );`)
+        
+        g_datalist.sort.register('duration', {
+            title: '时长',
+            async callback(items){
+                for(let k in items){
+                    let v = items[k]
+                    let meta = await getMeta(v)
+                    v.duration = meta?.duration || 0
+                }
+                return items.sort((a, b) => b.duration - a.duration)
+            }
+        })
+
+        g_datalist.sort.register('px', {
+            title: '分辨率',
+            async callback(items){
+                for(let k in items){
+                    let v = items[k]
+                    let meta = await getMeta(v)
+                    v.px = (meta?.width || 0) + (meta?.height || 0)
+                }
+                return items.sort((a, b) => b.px - a.px)
+            }
+        })
+    })
     g_data.table_indexs.media_meta = ['fid', 'duration', 'width', 'height', 'frame', 'bit_rate', 'sample_rate']
 
     const removeMeta = (fid) => g_data.data_remove2({table: 'media_meta', key: 'fid', value: fid})
@@ -128,4 +154,4 @@ $(function() {
         }
     })
 
-});
+})()

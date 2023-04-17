@@ -10,9 +10,14 @@ g_hotkey.init({
             content: "ipc_send('devtool')",
             type: 2,
         },
-        '`': {
-            title: '切换侧边',
-            content: "getEle('sidebar_toggle,left').click()",
+        'ctrl+shift+!': {
+            title: '切换左侧边',
+            content: "doAction('sidebar_toggle,left')",
+            type: 2,
+        },
+        'ctrl+shift+@': {
+            title: '切换右侧边',
+            content: "doAction('sidebar_toggle,right')",
             type: 2,
         },
         'f10': {

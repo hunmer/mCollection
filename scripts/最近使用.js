@@ -3,6 +3,7 @@
 // @version    1.0
 // @author    hunmer
 // @description    增加最近使用到侧边栏（拖动文件日期)
+// @updateURL   https://neysummer2000.fun/mCollection/scripts/最近使用.js
 // @namespace    b8011727-38f9-4ba0-8e78-c62d27271b7e
 
 // ==/UserScript==

@@ -33,9 +33,9 @@ var g_client = {
     },
     startSever() {
         // return;
-        let _path = __dirname + '\\server\\'
+        let _path = 
         // if(this.child) require('tree-kill')(this.child.pid, 'SIGKILL', () => console.log('已退出服务...'))
-        this.child = nodejs.cli.run(_path + 'node.exe', _path + 'server.js', {
+        this.child = nodejs.cli.run(_dataPath + 'node.exe', __dirname + '\\server\\server.js', {
             // detached: true
         }, {
             onOutput: function(msg) {

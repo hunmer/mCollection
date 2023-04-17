@@ -48,8 +48,10 @@ var g_search = {
                     self.changed = 0
                     self.refresh()
                     self.tabs.setActive(self.defaultTab)
+                    return
                 }
-                self.input_focus()
+                let current = self.tabs.getActive()
+                current && self.input_focus(current, 100)
             }
         })
 
@@ -59,7 +61,7 @@ var g_search = {
             items: copyObj(this.tabItems),
             parseContent: () => content,
             event_shown({tab}) {
-                self.input_focus(tab, 150)
+                self.input_focus(tab, 200)
             }
         })
 
@@ -126,7 +128,8 @@ g_search.init()
 
 g_search.tabs_register('file', {
     tab: {
-        title: '<i class="ti ti-file fs-2 me-2"></i>文件',
+        icon: 'file',
+        title: '文件',
         getTabIndex: () => 3,
         html: g_search.replaceHTML(`%search_bar%<div class="search_result list-group list-group-flush p-2"></div>`)
     },

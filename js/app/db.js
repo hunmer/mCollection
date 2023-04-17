@@ -1,5 +1,6 @@
 g_db.init({
-    db_class: require('./js/database.js'), // require('better-sqlite3')
+    // db_class: require('./js/database.js'), 
+    db_class: require('better-sqlite3'),
     table_sqlite: `
      CREATE TABLE IF NOT EXISTS files(
          id INTEGER PRIMARY KEY AUTOINCREMENT,

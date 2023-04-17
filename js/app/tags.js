@@ -19,6 +19,8 @@ var g_tags = require('./js/app/deepFolder.js')({
     },
 })
 
+g_hotkey.register('ctrl+keyt', { title: '设置标签', content: "getEle('detail_tags').click()", type: 2 })
+
 g_rule.register('noTag', {
     title: '无标签',
     sqlite: {
@@ -36,7 +38,8 @@ g_action.registerAction('search_tag_item', dom => {
 
 g_search.tabs_register('tags', {
     tab: {
-        title: '<i class="ti ti-tag fs-2 me-2"></i>标签',
+        icon: 'tag',
+        title: '标签',
         getTabIndex: 1,
         html: g_search.replaceHTML(`%search_bar%<div class="search_result btn-list p-2"></div>`)
     },

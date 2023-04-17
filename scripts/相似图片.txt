@@ -1,0 +1,8 @@
+// ==UserScript==
+// @name    相似图片
+// @version    1.0
+// @author    hunmer
+// @description    查找相似图片(hash)
+// @directURL   https://neysummer2000.fun/mCollection/scripts/相似图片.js
+// @namespace    0b0e996b-4554-4973-b9c1-2c994bcf117c
+// ==/UserScript==

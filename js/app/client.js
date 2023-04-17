@@ -1,11 +1,10 @@
 
-
-
 g_client.registerRevice({
     async db_connected(data) {
         let first = g_db.first == undefined
         if(first) data.first = g_db.first = 1
             
+
         g_plugin.callEvent('db_connected', data)
         // 第一次连接数据库（刷新不触发）
         switch (data.opts.type) {

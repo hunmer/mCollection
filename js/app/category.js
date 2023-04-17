@@ -40,22 +40,11 @@ var g_category = {
                     <a tabindex="-1" title="其他" class="btn btn-pill btn-ghost-primary" href="#dropdown-more" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false"><i class="ti ti-dots"></i></a>
                     <div class="dropdown-menu" id="dropdown-more">
                         <h6 class="dropdown-header">软件</h6>
-                        <a class="dropdown-item" data-action="homepage">
-                            <i class="ti ti-brand-github fs-2"></i>
-                            项目主页
-                        </a>
-                        <a class="dropdown-item" onclick="ipc_send('url', 'https://www.52pojie.cn/thread-1688063-1-1.html')">
-                            <i class="ti ti-brand-hipchat fs-2"></i>
-                            52pojie
-                        </a>
                         <a class="dropdown-item" data-action="update_check">
-                            <i class="ti ti-clock-2 fs-2"></i>
-                            检测更新
-                            <span id="badge_update" class="badge bg-danger ms-auto">News</span>
+                            <i class="ti ti-clock-2 fs-2"></i>检测更新
                         </a>
                         <a class="dropdown-item" data-action="about">
-                            <i class="ti ti-alert-circle fs-2"></i>
-                            关于
+                            <i class="ti ti-alert-circle fs-2"></i>关于
                             <span class="badge bg-primary ms-auto">1.0.2</span>
                         </a>
                     </div>
@@ -156,6 +145,11 @@ var g_category = {
             #group_list .accordion-item::-webkit-scrollbar {
                 width: 13px !important;
             }
+            
+            #icons_left i:not(:last-child) {
+                margin-right: 5px;
+            }
+
         `)
 
         $(() => {

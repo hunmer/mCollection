@@ -1,16 +1,30 @@
-$(function() {
-
-    g_db.db.exec(`
-     CREATE TABLE IF NOT EXISTS score_meta(
-         fid  INTEGER PRIMARY KEY,
-         score TINYINT
-     );`)
+(() => {
 
     g_data.table_indexs.score_meta = ['fid', 'score']
+     g_plugin.registerEvent('db_connected', ({db}) => {
+        db.exec(`
+        CREATE TABLE IF NOT EXISTS score_meta(
+            fid  INTEGER PRIMARY KEY,
+            score TINYINT
+        );`)
+        
+        // 排序
+        g_datalist.sort.register('score', {
+            title: '评分',
+            async callback(items){
+                for(let k in items){
+                    let v = items[k]
+                    v.score = await getScore(v)
+                }
+                return items.sort((a, b) => b.score - a.score)
+            }
+        })
+    })
+
 
     const removeScore = (fid) => g_data.data_remove2({table: 'score_meta', key: 'fid', value: fid})
     const setScore = (fid, score) => g_data.data_set2({ table: 'score_meta', key: 'fid', value: fid, data: { fid, score } })
-    const getScore = async d => obj_From_key(await g_data.getMetaInfo(d, 'score'), 'score').score
+    const getScore = async d => obj_From_key(await g_data.getMetaInfo(d, 'score'), 'score').score || 0
     g_detail.inst.score = {set: setScore, get: getScore, remove: removeScore}
 
     g_style.addStyle('score', `
@@ -46,13 +60,13 @@ $(function() {
     `)
 
     g_plugin.registerEvent('onBeforeShowingDetail', ({ items, columns }) => {
-        if (items.length == 1) {
+        if(!columns.status) return
             columns.status.list.score = {
                 title: '评分',
                 class: 'bg-blue-lt',
                 primary: 99,
                 async getVal(d) {
-                    let score = await getScore(d)
+                    let score = d.length == 1 ? await getScore(d[0]) : 0
                     let h = ``
                     for (let i = 5; i > 0; i--) {
                         let id = '_star'+i
@@ -64,7 +78,6 @@ $(function() {
                     return `<div class="rating">${h}</div>`
                 }
             }
-        }
     })
 
     g_plugin.registerEvent('item.detail.changed.score', ({ list, val }) => {
@@ -81,4 +94,4 @@ $(function() {
         }
     })
 
-})
+})()

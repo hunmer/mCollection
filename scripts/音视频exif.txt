@@ -1,0 +1,9 @@
+// ==UserScript==
+// @name    音视频exif
+// @version    1.0
+// @author    hunmer
+// @description    储存视频音频exif,并添加过滤器
+// @directURL   https://neysummer2000.fun/mCollection/scripts/音视频exif.js
+// @namespace    23216309-d490-41ae-988b-ec72b10bbfa1
+
+// ==/UserScript==

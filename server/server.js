@@ -45,8 +45,7 @@ function registerRevice(name, callback) {
     return this
 }
 
-let db = require('./db.js')({ registerRevice, sendMsg })
-
+// let db = require('./db.js')({ registerRevice, sendMsg })
 function onMessage(data, ws) {
     let d = data.data
     let type = data.type
@@ -82,14 +81,14 @@ function onMessage(data, ws) {
 const express = require('express');
 const app = express();
 app.use(express.static(__dirname));
-const logger = (req, res, next) => {
-  console.log(
-    `请求的ip地址是：${req.ip}, 请求的路径是：${
-      req.url
-    }`);
-  next();
-};
-app.use(logger);
+// const logger = (req, res, next) => {
+//   console.log(
+//     `请求的ip地址是：${req.ip}, 请求的路径是：${
+//       req.url
+//     }`);
+//   next();
+// };
+// app.use(logger);
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.listen(41597);
@@ -121,7 +120,6 @@ function waitFor(name, send) {
     return new Promise(reslove => {
         let client = getClients()
         if (!client.length) reslove({ status: 'error', msg: '客户端不在后台运行!' })
-            
         client[0].send(JSON.stringify(send))
         registerRevice(name, data => {
             unregisterRevice(name)
@@ -201,38 +199,5 @@ registerApi('/api/item/addFromPaths', 'post', (req, res) => {
         id
     });
 })
-
-
-// 解析来自http的数据
-function importData(data) {
-    let r = []
-
-    // lists.forEach(item => {
-    //     let file = item.path
-    //     let { birthtimeMs, isFile, size } = files.stat(file)
-    //     if (isFile) {
-    //         let {ext, name} = files.splitName(file)
-    //         r.push({
-    //             file,
-    //             folders: data.folders || [],
-    //             title: name,
-    //             ext,
-    //             tags: item.tags || [],
-    //             desc: item.annotation || '',
-    //             md5: files.getFileMd5(file),
-    //             date: new Date().getTime(),
-    //             birthtime: birthtimeMs,
-    //             score: 0,
-    //             deleted: 0,
-    //             size,
-    //             json: {
-
-    //             }
-    //         })
-    //     }
-    // })
-    // db.data.data_import(r)
-}
-
 
 console.log('服务器启动成功')
