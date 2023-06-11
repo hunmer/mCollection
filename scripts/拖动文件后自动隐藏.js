@@ -10,7 +10,7 @@
 // ==/UserScript==
 
 $(function () {
-    g_setting.tabs.general.elements['hideAfterDraged'] = {
+    g_setting.tabs.plugins.elements['hideAfterDraged'] = {
         title: '拖动片段自动隐藏窗口',
         type: 'switch',
         value: () => getConfig('hideAfterDraged', false),

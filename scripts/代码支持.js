@@ -25,8 +25,8 @@ var g_code = {
         `)
 
         g_plugin.registerEvent('db_afterInsert', ({ opts, ret }) => {
-            let { table, data, meta } = opts
-            if (meta && table == 'files' && data.ext == 'code') {
+            let { table, data } = opts
+            if (table == 'files' && data.ext == 'code') {
                 g_data.data_set2({
                     table: 'code',
                     dbFile: this.db_file(),
@@ -40,7 +40,7 @@ var g_code = {
             }
         })
 
-        loadRes(g_plugin.getSciptPath() + 'code\\codeflask.min.js', () => {
+        loadRes(g_plugin.getSciptPath() + 'code/codeflask.min.js', () => {
 
             let flask
             g_form.registerPreset('code', {
@@ -51,15 +51,12 @@ var g_code = {
                         lineNumbers: true,
                     });
                 },
-                getVal: dom => {
-                    return flask.getCode()
-                }
-            }, d => {
-                return `
-                <label class="form-label {required}">{title}</label>
-                <div id="{id}" style="position: relative;height: 300px;margin-right: 10px;">{placeholder}</div>
-                `
-            })
+                getVal: dom =>  flask.getCode(),
+                getPreset: `
+                    <label class="form-label {required}">{title}</label>
+                    <div id="{id}" style="position: relative;height: 300px;margin-right: 10px;">{placeholder}</div>
+                    `
+            }) 
 
             self.code_edit({
                 // TODO 一个函数 可以创建不存在的标签 支持数组
@@ -78,7 +75,7 @@ var g_code = {
     },
 
     db_file() {
-        return g_db.db_getCurrentVal('path') + '\\code.db'
+        return g_db.db_getCurrentVal('path') + '/code.db'
     },
 
     code_edit(d) {
@@ -122,7 +119,7 @@ var g_code = {
                     value: d.code,
                 },
             },
-            callback({ vals }) {
+            async callback({ vals }) {
                 let code = vals.code
                 if (isEmpty(code)) return
 
@@ -133,7 +130,7 @@ var g_code = {
                 let r = {}
                 r[md5] = data
 
-                data.file = g_db.getSaveTo(md5) + vals.title + '.js' // TODO 根据语言文件名如.js
+                data.file = await g_db.getSaveTo(md5) + vals.title + '.js' // TODO 根据语言文件名如.js
                 nodejs.files.write(data.file, code)
                 data.ext = 'code'
                 data.size = code.length

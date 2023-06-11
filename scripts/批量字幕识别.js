@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name    批量字幕识别
-// @version    1.0
+// @version    1.1
 // @author    hunmer
 // @description    配合剪映实现批量字幕识别
 // @updateURL   https://neysummer2000.fun/mCollection/scripts/批量字幕识别.js
@@ -9,13 +9,16 @@
 // ==/UserScript==
 
 
-// (() => {
+(() => {
 
     const _selectedClass = 'item_selected table-primary'
     const get_path = () => getConfig('jianyin_path', '')
     g_menu.list['datalist_item'].items.push(...[{
-        text: '批量导入字幕',
+        text: '导入字幕',
         action: 'subtitle_setSource'
+    }, {
+        text: '导出字幕',
+        action: 'subtitle_exports'
     }])
 
     g_setting.tabs.plugins.elements['jianyin_path'] = {
@@ -56,7 +59,9 @@
         _updateSelected()
     }
 
+    const _getElement = (selector = '') => g_modal.modal_get('modal_subtitle1').find('tr'+selector)
     const _getItem = md5 => _sourceList.find(item => item.md5 == md5)
+    const _updateTable = () => g_form.update('modal_subtitle1', 'table') // 更新显示
 
     var _timer = 0
     g_input.bind('subtitle_timer', ({selected}) => _setTimer(selected))
@@ -91,21 +96,19 @@
                         sub.end -= start
                         return sub
                     }).sort((a, b) => a.start - b.start)
+
                     if(matched.length){
                         done++
-                        // item.subtitles = matched
                         item.status = matched.length+'条字幕'
-                        start = end
-
-                        // 写入vtt
                         nodejs.files.write(item.subtitle, 
                             `WEBVTT` + '\r\n\r\n' + 
                             matched.map(sub => `${getTime(sub.start, ':', ':', '', false, 3)} --> ${getTime(sub.end, ':', ':', '',false, 3)}\r\n${sub.text}\r\n\r\n`).join('')
-                        );
+                        ); // 写入vtt
                     }
+                    start = end
                 })
                 _setTimer(false)
-                g_form.assignChildElement('modal_subtitle1', 'table') // 更新显示
+                _updateTable()
                 showMessage('字幕写入成功', `成功写入【${done}】个字幕文件`)
             }
         }, 1000) : 0
@@ -118,12 +121,8 @@
         _sourceList = list
         let badge = insertEl({tag: 'span', text: '', props: { id: 'badge_subList', class: 'badge bg-primary me-2 h-fit', 'data-action': 'subtitle_SourceList'}}, {target: $('#traffic'), method: 'prependTo'})
         badge.html(`字幕队列:${Object.keys(list).length}`)
-
-        // 检查是否设置剪映数据目录
         toast('现在你可以从标记拖动文件到剪映里识别字幕')
     }
-
-    const _getElement = (selector = '') => g_modal.modal_get('modal_subtitle1').find('tr'+selector)
 
     // 更新选中
     const _updateSelected = () => {
@@ -182,6 +181,7 @@
                     <div class="btn-list text-center w-full">
                         <button class="btn btn-pill" data-action="subtitle_selectAll">全选/全不选</button>
                         <button class="btn btn-pill" data-action="subtitle_selectByTime">自动选择</button>
+                        <button class="btn btn-pill" data-action="subtitle_clearComepleted">清除已完成</button>
                     </div>
                     `
                 },
@@ -225,6 +225,34 @@
     }
 
     g_action.registerAction({
+        subtitle_exports: () => {
+            let i = 0
+            let list = {}
+            Promise.all(g_detail.selected_keys.map(async md5 => {
+                let subfile = await g_item.item_getVal('subtitle', md5)
+                if(nodejs.files.exists(subfile)){
+                    i++
+                    let data = await g_data.data_get(md5)
+                    let title = getFileName(data.title, false)
+                    if(list[title]) title += '('+i+')'
+                    list[title] = subfile
+                }
+            })).then(() => {
+                if(i == 0) return toast('没有找到任何字幕！', 'danger')
+                openFileDiaglog({
+                    title: '选择导出位置',
+                    properties: ['openDirectory'],
+                }, ([path]) => {
+                    if (isEmpty(path)) return
+                    Object.entries(list).forEach(([title, subfile]) => nodejs.files.copySync(subfile, path+'/'+title+'.vtt'))
+                    toast('成功导出'+i+'个字幕文件！', 'success')
+                })
+            })
+        },
+        subtitle_clearComepleted: () => {
+            _sourceList = _sourceList.filter(({status}) => status == '队列中')
+            _updateTable()
+        },
         subtitle_selectByTime: () => {
             prompt('300', {title: '输入上限时长/分钟'}).then(max => {
                 max = parseInt(max) * 60
@@ -255,15 +283,14 @@
             let path = get_path()
             if(!nodejs.files.exists(path)) return toast('请先在设置->插件里面设置剪映草稿目录', 'danger')
 
-            // TODO 多选的时候侧边栏显示视频总时长
             let err = 0
             let list = await Promise.all(g_detail.selected_keys.map(async md5 => {
                 let item = await g_data.data_get(md5)
                 let {file, subtitle} = await g_item.item_getVal(['file', 'subtitle'], item)
+
                 let duration = (await g_detail.inst.media.get(item.id))?.duration || 0
                 if(duration <= 0){
-                    // 读取媒体时长
-                    g_detail.inst.media.get.load(item, item.id)
+                    g_detail.inst.media.get.load(item, item.id) // 重新读取媒体时长
                     err++
                 }
                 return {md5, title: item.title, file, duration,subtitle, status: nodejs.files.exists(subtitle) ? '已存在字幕' : '队列中'}
@@ -275,4 +302,4 @@
         }
     })
 
-// })()
+})()

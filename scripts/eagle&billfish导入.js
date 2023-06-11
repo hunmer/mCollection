@@ -42,13 +42,13 @@
             }
         })
 
-        // _test(() => setTimeout(() => this.db_importFromBillfish('D:\\billfish_librarys\\test'), 1000)) // 等待标签加载完成
-        // _test(() => setTimeout(() => this.db_importFromEagle('I:\\software\\eagleData\\tt.library'), 2000)) // 等待标签加载完成
+        // _test(() => setTimeout(() => this.db_importFromBillfish('D:/billfish_librarys/test'), 1000)) // 等待标签加载完成
+        // _test(() => setTimeout(() => this.db_importFromEagle('I:/software/eagleData/tt.library'), 2000)) // 等待标签加载完成
 
     },
     async db_importFromBillfish(path) {
         let { exists } = nodejs.files
-        let bf = path + '\\.bf\\'
+        let bf = path + '/.bf/'
         if (!exists(bf)) return toast('此目录不是billfish数据目录!', 'danger')
 
         let db = g_db.db_read({
@@ -127,7 +127,7 @@
         })
 
         let i = 0
-        const next = () => {
+        const next = async () => {
             let item = files[i++]
             if(item == undefined || cancel) return
 
@@ -137,7 +137,7 @@
             if (pid == -1 || md5s.includes(md5)) return sloved()// 排除回收站
             // 获取多层文件夹结构
             let parents = getParents('folder', pid)
-            let file = nodejs.path.resolve(path, parents.map(_pid => find('folder', _pid).name).join('\\'), name)
+            let file = nodejs.path.resolve(path, parents.map(_pid => find('folder', _pid).name).join('/'), name)
             if (is_link) {
                 try {
                     file = nodejs.shell.readShortcutLink(file).target // 获取文件真实路径
@@ -145,8 +145,8 @@
             }
             if (!exists(file)) return sloved()
 
-            let saveTo = g_db.getSaveTo(md5)
-            let cover = bf + '.preview\\' + ("0" + id.toString(16)).slice(-2) + '\\' + id + '.small.webp'
+            let saveTo = await g_db.getSaveTo(md5)
+            let cover = bf + '.preview/' + ("0" + id.toString(16)).slice(-2) + '/' + id + '.small.webp'
 
             nodejs.files.copySync(file, saveTo + name)
             exists(cover) && nodejs.files.copySync(cover, saveTo + 'cover.jpg')
@@ -192,10 +192,10 @@
     async db_importFromEagle(path) {
         let r = {}
         let { exists } = nodejs.files
-        let meta = path + '\\metadata.json'
+        let meta = path + '/metadata.json'
         if (!exists(meta)) return toast('此目录不是eagle数据目录!', 'danger')
 
-        let dirs = nodejs.files.listDir(path + '\\images')
+        let dirs = nodejs.files.listDir(path + '/images')
         if (!dirs.length) return toast('没有找到任何素材', 'danger')
 
         meta = JSON.parse(nodejs.files.read(meta))
@@ -231,21 +231,21 @@
 
         let i = 0
         let md5s = await g_data.getMd5List()
-        const next = () => {
+        const next = async () => {
             let dir = dirs[i++]
             if (cancel || dir == undefined) return
-            let json = dir + '\\metadata.json'
+            let json = dir + '/metadata.json'
             if (exists(json)) {
                 try {
                     let { isDeleted, width, height, palettes, duration, annotation: desc, lastModified: date, btime: birthtime, name, id, size, star: score, tags, folders, url, ext } = JSON.parse(nodejs.files.read(json))
                     if (!isDeleted) {
-                        let file = dir + '\\' + name + '.' + ext
+                        let file = dir + '/' + name + '.' + ext
                         let md5 = nodejs.files.getFileMd5(file)
                         if (!md5s.includes(md5)) {
 
-                            let saveTo = g_db.getSaveTo(md5)
+                            let saveTo = await g_db.getSaveTo(md5)
                             nodejs.files.copySync(file, saveTo + name + '.' + ext)
-                            let cover = dir + '\\' + name + '_thumbnail.png'
+                            let cover = dir + '/' + name + '_thumbnail.png'
                             exists(cover) && nodejs.files.copySync(cover, saveTo + 'cover.jpg')
 
                             let colors = (palettes || []).map(v => v.color)
@@ -256,6 +256,7 @@
                                     date: v.lastModified
                                 }
                             })
+                            
                             g_data.data_set2({
                                 key: 'md5',
                                 value: md5,

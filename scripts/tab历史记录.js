@@ -47,7 +47,6 @@
 
 
         g_action.registerAction({
-          
             tab_history: () => self.modal(),
             tab_history_clear(){
                 self.data = []

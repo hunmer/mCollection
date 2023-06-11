@@ -3,45 +3,44 @@
 </p>
 <h1 align="center">mCollection</h1>
 
->开源，可扩展，可自定义的素材管理库
+>🎉开源，可扩展，可自定义的素材管理库
 
 <p align="center">
-  <img src="https://img.shields.io/github/forks/hunmer/mCollection">
-  <img src="https://img.shields.io/github/stars/hunmer/mCollection?color=success">
+  <img src="https://img.shields.io/badge/platform-win7%20%7C%20win10%20%7C%20win11%20%7C%20macos-blue">
 </p>
 
 <p align="center">
   <img src="/screenshot.png">
+  <img src="/plugins.png">
 </p>
 
 # 设计初衷
-常见的素材管理器满足不了自己的需求，想打造成一个可以高效存储任意文件的软件
+常见的素材管理器满足不了自己的需求，希望能有一个可以高自由度可定制的文件管理器
 
 # 功能列表
-- [x] 无限制的扩展插件,想怎么改怎么改
-- [x] sqlite3存储结构，百万数据
-- [x] 允许自定义字段信息存储与读取
-- [x] 功能自由搭配，只安装对自己有用的
-- [x] 多tab
-- [x] 全局搜索
-- [ ] 前后端分离，支持私人部署素材库
-- [ ] 多素材库
+- [x] sqlite3存储结构，允许自定义关联表
+- [x] 没有限制的扩展插件，事件广播多
+- [x] 模块化设计，各个功能互不干扰
+- [x] 标签页设计，切换更便捷
+- [x] 内置全局呼出搜索
+- [x] 代码热更新
+- [ ] 前后端分离，支持部署私人素材库
 - [ ] ...
 
-# 现有插件
-- [x] eagle&billfish导入
-- [x] 相似图片指纹查找
-- [x] 媒体exif(视频或照片)
-- [x] 标签页快捷跳转
-- [x] 不打开空目录
-- [x] 开发助手
-- [x] 拖动文件后自动隐藏
-- [x] 未整理分类
-- [x] 相似图片
-- [x] 最近使用
-- [ ] ...
+# 支持的格式
+- [x] 允许导入任意文件格式，可设置黑名单
+格式 | 封面 | 预览 | 编辑 | 插件
+--- | --- | ---
+常见图片格式(jpg, png, jpeg, xpm,xcf,xbm,x3f,wpg,wbmp,tiff,tga,raf,svg,sgi,rw2,ras,psd,ppm,pnm,webp,pict,picon,pgm,pfm,pef,pes,pcx,pcd,pbm,pam,orf,nrw,nef,mng,jps,jpe,jp2,jfif,ico,heif,heic,hdr,gif,exr,cr2,dng,dds,cur,bmp) | ✅ | ✅ |
+常见视频格式(mp4, ts, vob, rm, ogv, mxf, mts, mpg, mpeg, mjpeg, m4v, m2v, m2ts, hevc, f4v, wtv, asf, 3gp, flv, avi, mkv, mov, wmv, webm) | ✅ | ✅ |
+常见文档格式(pdf) | ✅ | ✅ |
+常见字体格式(woff,ttf,sfd,ps,pfb,otf,dfont) | ✅ | 
+常见3D格式(woff,ttf,sfd,ps,pfb,otf,dfont) | ✅ | ✅ |  | ✅
+
+# 现有插件(40+)
+- [点击查看插件列表](https://github.com/hunmer/mCollection/tree/main/scripts)
 
 # 其他
-## 软件现在还在测试中,bug可能较多,喜欢折腾的欢迎交流...
+## 软件现在还在测试中,bug可能较多,喜欢折腾的欢迎交流，[点击链接加入群聊【开源素材管理软件交流】](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=mchwwNA1oEV1XcW6eDkXMsYVj2KAWfvU&authKey=sZVoB46qIMKlGT9c5ZrFkaD2ldunf670kEpymex1ofl6eXM%2BHkfetidntqdnvNDO&noverify=0&group_code=602591690)
 
 

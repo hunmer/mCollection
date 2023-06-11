@@ -21,7 +21,7 @@
         g_action.registerAction({
             tab_back: () => this.tab_goTo(-1),
             tab_forward: () => this.tab_goTo(1),
-            tab_refresh: () => g_datalist.tab_clear(),
+            tab_refresh: () => g_datalist.tab_refresh(),
         })
 
         g_plugin.registerEvent('tablist_set', ({vals}) => {
@@ -42,7 +42,8 @@
             this.save()
             this.tab_goTo()
         })
-        this.tab_goTo()
+        g_plugin.registerEvent('db_connected', () =>  this.tab_goTo())
+       
     },
     
     save(){

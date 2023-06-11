@@ -9,7 +9,7 @@
 
 // ==/UserScript==
 
-(() => {
+// (() => {
     let observe = new domObserver({
         selector: 'tablist',
         checkUpdate: dom => dom.tagName == 'TABLIST',
@@ -33,4 +33,4 @@
         })
     }
 
-})()
+// })()
