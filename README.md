@@ -3,7 +3,7 @@
 </p>
 <h1 align="center">mCollection</h1>
 
->🎉开源，可扩展，可自定义的素材管理库
+>🎉开源，可扩展，可自定义的素材管理库 (本项目不再维护，全新版本已经发布到 [mira](https://github.com/hunmer/mira) ）
 
 <p align="center">
   <img src="https://img.shields.io/badge/platform-win7%20%7C%20win10%20%7C%20win11%20%7C%20macos-blue">
