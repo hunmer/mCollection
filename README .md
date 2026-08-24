@@ -1,0 +1,49 @@
+<p align="center">
+  <img src="/favicon.png">
+</p>
+<h1 align="center">mCollection</h1>
+
+>🎉开源，可扩展，可自定义的素材管理库 (本项目不再维护，全新版本已经发布到 [mira](https://github.com/hunmer/mira) ）
+
+<p align="center">
+  <img src="https://img.shields.io/badge/platform-win7%20%7C%20win10%20%7C%20win11%20%7C%20macos-blue">
+</p>
+
+<p align="center">
+  <img src="/screenshot.png">
+  <p></p>
+  <img src="/plugins.png">
+</p>
+
+# 设计初衷
+常见的素材管理器满足不了自己的需求，希望能有一个可以高自由度可定制的文件管理器
+
+# 功能列表
+- [x] sqlite3存储结构，允许自定义关联表
+- [x] 没有限制的扩展插件，事件广播多
+- [x] 模块化设计，各个功能互不干扰
+- [x] 标签页设计，切换更便捷
+- [x] 内置全局呼出搜索
+- [x] 代码热更新
+- [ ] 前后端分离，支持部署私人素材库
+- [ ] ...
+
+# 支持的格式
+> 允许导入任意文件格式，可设置黑名单
+
+| 格式 | 封面 | 预览 | 编辑 | 插件
+| :---: | --- | --- | --- | --- 
+| 常见图片格式<br>jpg, png, jpeg, xpm,xcf,xbm,x3f,wpg,<br>wbmp,tiff,tga,raf,svg,sgi,rw2,ras,psd,<br>ppm,pnm,webp,pict,picon,pgm,pfm,pef,pes,<br>pcx,pcd,pbm,pam,orf,nrw,nef,mng,jps,jpe,<br>jp2,jfif,ico,heif,heic,hdr,</br>gif,exr,cr2,dng,dds,cur,bmp | ✅ | ✅ |
+| 常见视频格式<br>mp4, ts, vob, rm, ogv, mxf, mts, mpg<br> mpeg, mjpeg, m4v, m2v, m2ts, hevc<br> f4v, wtv, asf, 3gp, flv, avi<br> mkv, mov, wmv, webm | ✅ | ✅ |
+| 常见文档格式<br> pdf | ✅ | ✅ |
+| 常见字体格式<br>woff,ttf,sfd,ps,pfb,otf,dfont | ✅ | 
+| 常见3D格式<br>obj, 3ds, stl, ply, gltf, glb, off,<br> 3dm, fbx, dae, wrl, 3mf, ifc, brep, step,<br> iges, fcstd, bim | ✅ | ✅ |  | ✅
+
+# 现有插件(40+)
+- [点击查看插件列表](https://github.com/hunmer/mCollection/tree/main/scripts)
+
+# 其他
+软件现在还在测试中,bug可能较多,喜欢折腾的欢迎交流
+[点击链接加入群聊【开源素材管理软件交流】](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=mchwwNA1oEV1XcW6eDkXMsYVj2KAWfvU&authKey=sZVoB46qIMKlGT9c5ZrFkaD2ldunf670kEpymex1ofl6eXM%2BHkfetidntqdnvNDO&noverify=0&group_code=602591690)
+
+
